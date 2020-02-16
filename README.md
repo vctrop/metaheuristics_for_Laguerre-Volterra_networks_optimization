@@ -1,2 +1,2 @@
-# Laguerre-Volterra_Network_structure
-Structural description of vanilla Laguerre-Volterra Networks, with all parameters undefined
+# Metaheuristics optimizing Laguerre-Volterra networks (LVN)
+Benchmark of metaheuristics in the optimization of Laguerre-Volterra networks (LVN) non-structural (continuous) parameters
