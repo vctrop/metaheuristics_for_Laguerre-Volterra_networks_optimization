@@ -23,7 +23,7 @@
 import numpy as np
 
 # Class defining structure of the Laguerre-Volterra network (LVN) for a generic set of parameters
-class LaguerreVolterraNetwork():
+class LVN:
     def __init__(self):
         # Structural parameters
         self.laguerre_order = None
@@ -64,7 +64,7 @@ class LaguerreVolterraNetwork():
         
         # 
         filter_bank_outputs = [0] * self.laguerre_order
-        delayed_filter_bank_outputs = list(filterbank_outputs)                              # look for a way to eliminate the delayed filter bank outputs (it is only really needed in the last term of filter bank outputs computation)
+        delayed_filter_bank_outputs = list(filter_bank_outputs)                              # look for a way to eliminate the delayed filter bank outputs (it is only really needed in the last term of filter bank outputs computation)
         
         # Input x into the system and get its output y
         y = [output_offset] * len(x)
@@ -72,21 +72,22 @@ class LaguerreVolterraNetwork():
             ## update all L laguerre filters outputs
             # update v_0
             delayed_filter_bank_outputs[0] = filter_bank_outputs[0]
-            filter_bank_outputs[0] = alpha_sqrt * delayed_filter_bank_outputs[0] + self.sampling_interval * np.sqrt(1 - self.laguerre_alpha) * sample
+            filter_bank_outputs[0] = alpha_sqrt * delayed_filter_bank_outputs[0] + self.sampling_interval * np.sqrt(1 - laguerre_alpha) * sample
             # update v_1 .. v_{L-1}
             for j in range(1, self.laguerre_order):
                 delayed_filter_bank_outputs[j] = filter_bank_outputs[j]
                 filter_bank_outputs[j] = alpha_sqrt * delayed_filter_bank_outputs[j] + alpha_sqrt * filter_bank_outputs[j - 1] - delayed_filter_bank_outputs[j - 1]
             
-            # for each hidden unit
+            # Compute and accumulate hidden units outputs
             for h in range(self.num_hidden_units):
                 # compute hidden unit input via inner product between filter-bank outputs and weights[:, h]
-                weighted_inputs = sum([w * v for w, v in zip(hidden_unit_weights[:, h], filter_bank_outputs)])
+                weighted_inputs = sum([w * v for w, v in zip(list( np.array(hidden_unit_weights)[:, h] ), filter_bank_outputs)])
                 
-                # compute hidden unit output from polynomial coefficients using Horner's algorithm
-                unit_output = polynomial_coefficients[-1]
-                for i in range(-2, - len(polynomial_coefficients) - 1, -1):
-                    unit_output = unit_output * weighted_inputs + polynomial_coefficients[i]
+                # compute hidden unit output from polynomial coefficients
+                # future: Horner's algorithm without constant constant term
+                unit_output = 0.0
+                for q in range(1, self.polynomial_order):
+                    unit_output += np.array(polynomial_coefficients)[q - 1, h] * (weighted_inputs ** q)
                 
                 y[i] += unit_output
         
