@@ -26,10 +26,10 @@ import numpy as np
 class LVN:
     def __init__(self):
         # Structural parameters
-        self.laguerre_order = None
-        self.num_hidden_units = None
-        self.polynomial_order = None
-        self.sampling_interval = None
+        self.laguerre_order = None          # L
+        self.num_hidden_units = None        # H
+        self.polynomial_order = None        # Q
+        self.sampling_interval = None       # Fs
 
         
     # Define order of laguerre filter-bank, number of hidden layer units and polynomial activation order
