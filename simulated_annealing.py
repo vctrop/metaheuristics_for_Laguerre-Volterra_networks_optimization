@@ -20,25 +20,3 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-
-import numpy as np
-from laguerre_volterra_network_structure import LVN
-
-# Sampling frequency fixed at 25 Hz
-Fs = 25
-
-# Simulate 5th order laguerre expansion output weighted, summed and cascaded with 4th order algebraic polynomial equation 
-def simulate_LVN(input_data):
-    # Structural parameters for the described system
-    L = 5;   H = 1;    Q = 4;
-    # Continuous parameters (randomly choosen)
-    alpha = 0.1
-    w = [[0.33, 0.72, -0.46, -0.29, -0.91]]
-    c = [[-0.53, 0.9, -1.81, 1.34]] 
-    offset = 0
-    
-    system = LVN()
-    system.define_structure(L, H, Q, 1/Fs)
-    output_data = system.compute_output(input_data, alpha, w, c, offset)
-    
-    return output_data
