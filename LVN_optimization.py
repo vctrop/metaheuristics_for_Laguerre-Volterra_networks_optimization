@@ -22,9 +22,14 @@
 
 import numpy as np
 import math
+import matplotlib.pyplot as plt
+
 import laguerre_volterra_network_structure
 import ant_colony_for_continuous_domains
-import simulated_systems
+import data_handling
+
+# IO
+train_input, train_output = data_handling.read_io("finite_ord_train.csv")
 
 # Normalized mean swquared error
 def NMSE(y, y_pred, alpha):
@@ -48,46 +53,40 @@ def NMSE(y, y_pred, alpha):
     
     return NMSE
 
-# Structural parameters  
-Fs = 25  
-L = 5;   H = 1;    Q = 4;
-
-# Parameters to be optimized
-alpha_min   = 0;    alpha_max   = 0.9   # approx lag with 0.9 is 263
-weight_min  = -10;  weight_max  = 10
-coef_min    = -10;  coef_max    = 10  
-offset_min  = -10;  offset_max  = 10
-
-# IO
-num_samples = 1024
-input_signal = np.random.standard_normal(size=num_samples)
-simulated_output = simulated_systems.simulate_LVN(input_signal) 
-  
-# 
+# Compute cost of candidate solution
 def compute_cost(candidate_solution):
+    # Structural parameters  
+    Fs = 25  
+    L = 5;   H = 1;    Q = 4;
+    
+    # Continuous parameters
     alpha = candidate_solution[0]
     w = [candidate_solution[1 : L+1]]
     c = [candidate_solution[L+1 : L+Q+1]]
     offset = candidate_solution[-1]
     
+    # Generate output and compute cost
     solution_system = laguerre_volterra_network_structure.LVN()
     solution_system.define_structure(L, H, Q, 1/Fs)
-    solution_output = solution_system.compute_output(input_signal, alpha, w, c, offset)
+    solution_output = solution_system.compute_output(train_input, alpha, w, c, offset)
     
-    cost = NMSE(simulated_output, solution_output, alpha)
+    cost = NMSE(train_output, solution_output, alpha)
     
     return cost
-
+    
+# Parameters to be optimized
+alpha_min   = 0;    alpha_max   = 0.9   # approx lag with 0.9 is 263
+weight_min  = -10;  weight_max  = 10
+coef_min    = -10;  coef_max    = 10  
+offset_min  = -10;  offset_max  = 10
     
 # Setup ACOr and optimize
 colony = ant_colony_for_continuous_domains.ACOr()
-num_iterations = 10000
+num_iterations = 50
 # Solution organization
 # alpha, w0, ..., wL-1, c1, ..., cQ, offset
-if H != 1:
-    print("This solution representation is only suitable when H = 1")
-    exit(-1)
-    
+
+# TODO: PARAMETERIZE
 ranges = [[alpha_min,alpha_max],
           [weight_min,weight_max],
           [weight_min,weight_max],
