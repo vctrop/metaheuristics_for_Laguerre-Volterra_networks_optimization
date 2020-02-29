@@ -22,7 +22,7 @@
 
 
 import numpy as np
-from laguerre_volterra_network_structure import LVN
+import laguerre_volterra_network_structure import LVN
 
 # Sampling frequency fixed at 25 Hz
 Fs = 25
@@ -33,12 +33,12 @@ def simulate_LVN(input_data):
     L = 5;   H = 1;    Q = 4;
     # Continuous parameters (randomly choosen)
     alpha = 0.1
-    w = [[0.33, 0.72, -0.46, -0.29, -0.91]]
-    c = [[-0.53, 0.9, -0.81, 0.34]] 
+    W = [[0.33, 0.72, -0.46, -0.29, -0.91]]
+    C = [[-0.53, 0.9, -0.81, 0.34]] 
     offset = 0
     
     system = LVN()
     system.define_structure(L, H, Q, 1/Fs)
-    output_data = system.compute_output(input_data, alpha, w, c, offset, False)
+    output_data = system.compute_output(input_data, alpha, W, C, offset, False)
     
     return output_data

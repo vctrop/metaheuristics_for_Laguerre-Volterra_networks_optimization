@@ -59,15 +59,19 @@ class LVN:
         for unit_weights in hidden_units_weights:
             #unit_weights = np.array(hidden_units_weights[unit_index * self.L : (unit_index + 1) * self.L - 1])
             #units_absolute_values[unit_index] = math.sqrt( np.sum(unit_weights ** 2) )
+            unit_weights = np.array(unit_weights)
             units_absolute_values.append( math.sqrt(np.sum(unit_weights ** 2)) )
-            normalized_weights.append( list(np.array(unit_weights) / units_absolute_values[-1]) )
+            normalized_weights.append( list(unit_weights / units_absolute_values[-1]) )
+        
+        print("Absolute values")
+        print(units_absolute_values)
         
         # Update coefficients of each order
         units_absolute_values = np.array(units_absolute_values)
         scaled_coefficients = np.array(polynomial_coefficients)
-        for poly_order in range(0, self.Q):
-            scaled_coefficients[:, poly_order] *= (units_absolute_values ** poly_order)
-            
+        for poly_order in range(1, self.Q + 1):
+            scaled_coefficients[:, poly_order - 1] *= (units_absolute_values ** poly_order)
+            print(scaled_coefficients[:, poly_order - 1])
             # order_indices = [i for i in range(poly_order, self.Q * self.H, self.Q)]
             # order_coefficients = np.array(polynomial_coefficients)[order_indices]
             # scaled_coefficients[order_indices] = order_coefficients * (units_absolute_values ** poly_order)

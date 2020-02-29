@@ -76,12 +76,11 @@ def compute_cost(candidate_solution):
     cost = NMSE(train_output, solution_output, alpha)
     
     return cost
-
     
 # Parameters to be optimized
 alpha_min   = 0;    alpha_max   = 0.9   # approx lag with 0.9 is 263
 weight_min  = -1;  weight_max  = 1
-coef_min    = -10;  coef_max    = 10  
+coef_min    = -1;  coef_max    = 1  
 offset_min  = -1;  offset_max  = 1
     
 # Setup ACOr and optimize
