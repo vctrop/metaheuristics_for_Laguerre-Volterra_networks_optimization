@@ -39,8 +39,42 @@ class LVN:
         self.H = num_hidden_units
         self.Q = polynomial_order
         self.T = sampling_interval
-
-      
+        
+        
+    # Normalize hidden unit input weights to unit norm and scale polynomial coefficients according to the hidden unit it belongs and the polynomial order
+    def normalize_scale_parameters(self, hidden_units_weights, polynomial_coefficients):
+        # Shape of the dependent parameters are defined by structural parameters 
+        if np.shape(hidden_units_weights) != (self.H, self.L):
+            print("Error, wrong shape of hidden unit weights")
+            exit(-1)  
+        if np.shape(polynomial_coefficients) != (self.H, self.Q):
+            print("Error, wrong shape of polynomial coefficients")
+            exit(-1)
+        
+        # Update weights of each hidden unit
+        #normalized_weights = hidden_units_weights
+        #units_absolute_values = [0.0] * self.H
+        normalized_weights = []
+        units_absolute_values = []
+        for unit_weights in hidden_units_weights:
+            #unit_weights = np.array(hidden_units_weights[unit_index * self.L : (unit_index + 1) * self.L - 1])
+            #units_absolute_values[unit_index] = math.sqrt( np.sum(unit_weights ** 2) )
+            units_absolute_values.append( math.sqrt(np.sum(unit_weights ** 2)) )
+            normalized_weights.append( list(np.array(unit_weights) / units_absolute_values[-1]) )
+        
+        # Update coefficients of each order
+        units_absolute_values = np.array(units_absolute_values)
+        scaled_coefficients = np.array(polynomial_coefficients)
+        for poly_order in range(0, self.Q):
+            scaled_coefficients[:, poly_order] *= (units_absolute_values ** poly_order)
+            
+            # order_indices = [i for i in range(poly_order, self.Q * self.H, self.Q)]
+            # order_coefficients = np.array(polynomial_coefficients)[order_indices]
+            # scaled_coefficients[order_indices] = order_coefficients * (units_absolute_values ** poly_order)
+        
+        return list(normalized_weights), list(scaled_coefficients)
+    
+        
     # Compute output from imput time-series for a given set of dependent continuous parameters (smoothing constant, filterbank-nonlinearities weights, polynomial coefficients and output offset)
     def compute_output(self, x, laguerre_alpha, hidden_units_weights, polynomial_coefficients, output_offset, weights_modified):
         ## Error checking
@@ -61,7 +95,7 @@ class LVN:
             exit(-1)
         
         if weights_modified:
-            hidden_units_weights, polynomial_coefficients = normalize_scale_parameters(hidden_units_weights, polynomial_coefficients)
+            hidden_units_weights, polynomial_coefficients = self.normalize_scale_parameters(hidden_units_weights, polynomial_coefficients)
         
         # Pre-compute alpha square root to avoid its repeated computation
         alpha_sqrt = np.sqrt(laguerre_alpha)
@@ -104,34 +138,7 @@ def laguerre_filter_memory(alpha):
     
     return M
     
-    
-# 
-def normalize_scale_parameters(hidden_units_weights, polynomial_coefficients):
-    # Input verification
-    if len(hidden_units_weights) != self.L * self.H:
-        print("Hidden units input weights array do not match the current LVN structure")
-        exit("-1")
-    if len(polynomial_coefficients) != self.Q * self.H:
-        print("Polynomial coefficients array do not match the current LVN structure")
-        exit("-1")
-    
-    # Update weights of each hidden unit
-    normalized_weights = hidden_units_weights
-    units_absolute_value = [0.0] * self.H
-    for unit_index in range(0, self.H):
-        unit_weigths = np.array(hidden_units_weights[unit_index * self.L : (unit_index + 1) * self.L - 1])
-        units_absolute_value[unit_index] = math.sqrt( np.sum(unit_weigths ** 2) )
-        normalized_weights[unit_index * self.L : (unit_index + 1) * self.L - 1] = list( unit_weigths / units_absolute_value[unit_index] )
-    
-    # Update coefficients of each order
-    scaled_coefficients = np.array(polynomial_coefficients)
-    for poly_order in range(0, self.Q):
-        order_indices = [i for i in range(poly_order, self.Q * self.H, self.Q)]
-        order_coefficients = np.array(polynomial_coefficients)[order_indices]
-        scaled_coefficients[order_indices] = order_coefficients * (units_absolute_value ** poly_order)
-    
-    return normalized_weights, scaled_coefficients
-    
+
     
     
     

@@ -34,7 +34,7 @@ def simulate_LVN(input_data):
     # Continuous parameters (randomly choosen)
     alpha = 0.1
     w = [[0.33, 0.72, -0.46, -0.29, -0.91]]
-    c = [[-0.53, 0.9, -1.81, 1.34]] 
+    c = [[-0.53, 0.9, -0.81, 0.34]] 
     offset = 0
     
     system = LVN()

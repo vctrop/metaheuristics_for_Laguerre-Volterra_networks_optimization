@@ -28,8 +28,7 @@ import laguerre_volterra_network_structure
 import ant_colony_for_continuous_domains
 import data_handling
 
-# IO
-train_input, train_output = data_handling.read_io("finite_ord_train.csv")
+
 
 # Normalized mean swquared error
 def NMSE(y, y_pred, alpha):
@@ -38,8 +37,7 @@ def NMSE(y, y_pred, alpha):
         exit(-1)
     
     # Laguerre alpha paremeter determines the system memory (find reference for formula)
-    M = (-30 - math.log(1 - alpha)) / math.log(alpha)
-    M = math.ceil(M)
+    M = laguerre_volterra_network_structure.laguerre_filter_memory(alpha)
     
     if len(y) <= M:
         print("Data length is lesser than required by alpha parameter")
@@ -55,9 +53,14 @@ def NMSE(y, y_pred, alpha):
 
 # Compute cost of candidate solution
 def compute_cost(candidate_solution):
+    # IO
+    train_input, train_output = data_handling.read_io("finite_ord_train.csv")
+    
     # Structural parameters  
     Fs = 25  
     L = 5;   H = 1;    Q = 4;
+    
+    # Fazer conversão uni -> bidimensional aqui
     
     # Continuous parameters
     alpha = candidate_solution[0]
@@ -68,17 +71,18 @@ def compute_cost(candidate_solution):
     # Generate output and compute cost
     solution_system = laguerre_volterra_network_structure.LVN()
     solution_system.define_structure(L, H, Q, 1/Fs)
-    solution_output = solution_system.compute_output(train_input, alpha, w, c, offset)
+    solution_output = solution_system.compute_output(train_input, alpha, w, c, offset, True)
     
     cost = NMSE(train_output, solution_output, alpha)
     
     return cost
+
     
 # Parameters to be optimized
 alpha_min   = 0;    alpha_max   = 0.9   # approx lag with 0.9 is 263
-weight_min  = -10;  weight_max  = 10
+weight_min  = -1;  weight_max  = 1
 coef_min    = -10;  coef_max    = 10  
-offset_min  = -10;  offset_max  = 10
+offset_min  = -1;  offset_max  = 1
     
 # Setup ACOr and optimize
 colony = ant_colony_for_continuous_domains.ACOr()
