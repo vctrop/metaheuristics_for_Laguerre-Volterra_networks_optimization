@@ -51,7 +51,7 @@ def NMSE(y, y_pred, alpha):
     
     return NMSE
 
-# Compute cost of candidate solution
+# Compute cost of candidate solution, which is encoded as a flat array: alpha, W(0,0) ... W(L-1,H-1), C(0,0) ... C(Q-1,H-1), offset
 def compute_cost(candidate_solution):
     # IO
     train_input, train_output = data_handling.read_io("finite_ord_train.csv")
@@ -60,18 +60,23 @@ def compute_cost(candidate_solution):
     Fs = 25  
     L = 5;   H = 1;    Q = 4;
     
-    # Fazer conversão uni -> bidimensional aqui
-    
-    # Continuous parameters
+    # Get parameters from candidate solution
     alpha = candidate_solution[0]
-    w = [candidate_solution[1 : L+1]]
-    c = [candidate_solution[L+1 : L+Q+1]]
+    flat_W = candidate_solution[1 : (H * L + 1)]
+    flat_C = candidate_solution[(H * L + 1) : (H * L + 1) + H * Q]
     offset = candidate_solution[-1]
+    
+    # de-flat W and C
+    W = []
+    C = []
+    for hidden_unit in range(H):
+        W.append( flat_W[hidden_unit * L : (hidden_unit + 1) * L] )
+        C.append( flat_C[hidden_unit * Q : (hidden_unit + 1) * Q] )
     
     # Generate output and compute cost
     solution_system = laguerre_volterra_network_structure.LVN()
     solution_system.define_structure(L, H, Q, 1/Fs)
-    solution_output = solution_system.compute_output(train_input, alpha, w, c, offset, True)
+    solution_output = solution_system.compute_output(train_input, alpha, W, C, offset, True)
     
     cost = NMSE(train_output, solution_output, alpha)
     

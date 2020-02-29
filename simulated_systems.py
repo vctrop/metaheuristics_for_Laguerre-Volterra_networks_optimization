@@ -22,7 +22,7 @@
 
 
 import numpy as np
-import laguerre_volterra_network_structure import LVN
+from laguerre_volterra_network_structure import LVN
 
 # Sampling frequency fixed at 25 Hz
 Fs = 25

@@ -52,30 +52,19 @@ class LVN:
             exit(-1)
         
         # Update weights of each hidden unit
-        #normalized_weights = hidden_units_weights
-        #units_absolute_values = [0.0] * self.H
         normalized_weights = []
         units_absolute_values = []
         for unit_weights in hidden_units_weights:
-            #unit_weights = np.array(hidden_units_weights[unit_index * self.L : (unit_index + 1) * self.L - 1])
-            #units_absolute_values[unit_index] = math.sqrt( np.sum(unit_weights ** 2) )
             unit_weights = np.array(unit_weights)
             units_absolute_values.append( math.sqrt(np.sum(unit_weights ** 2)) )
             normalized_weights.append( list(unit_weights / units_absolute_values[-1]) )
-        
-        print("Absolute values")
-        print(units_absolute_values)
-        
+
         # Update coefficients of each order
         units_absolute_values = np.array(units_absolute_values)
         scaled_coefficients = np.array(polynomial_coefficients)
         for poly_order in range(1, self.Q + 1):
             scaled_coefficients[:, poly_order - 1] *= (units_absolute_values ** poly_order)
-            print(scaled_coefficients[:, poly_order - 1])
-            # order_indices = [i for i in range(poly_order, self.Q * self.H, self.Q)]
-            # order_coefficients = np.array(polynomial_coefficients)[order_indices]
-            # scaled_coefficients[order_indices] = order_coefficients * (units_absolute_values ** poly_order)
-        
+            
         return list(normalized_weights), list(scaled_coefficients)
     
         
@@ -101,8 +90,10 @@ class LVN:
         if weights_modified:
             hidden_units_weights, polynomial_coefficients = self.normalize_scale_parameters(hidden_units_weights, polynomial_coefficients)
         
-        # Pre-compute alpha square root to avoid its repeated computation
+        # Pre-compute alpha square root to avoid repeated computation
         alpha_sqrt = np.sqrt(laguerre_alpha)
+        
+        # Initiate Laguerre filter bank
         filter_bank_outputs = [0] * self.L
         delayed_filter_bank_outputs = list(filter_bank_outputs)                              # look for a way to eliminate the delayed filter bank outputs (it is only really needed in the last term of filter bank outputs computation)
         

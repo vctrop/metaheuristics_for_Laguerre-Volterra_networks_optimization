@@ -22,7 +22,7 @@
 
 import numpy as np
 import csv
-import simulated_systems
+#import simulated_systems
 
 # Generate IO data using a Gaussian White Noise (GWN) signal as input to enable the system to capture dynamics of frequency cross-terms
 def generate_io(num_samples, system_simulation, file_name):
