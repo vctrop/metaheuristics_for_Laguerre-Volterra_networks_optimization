@@ -39,6 +39,6 @@ def simulate_LVN(input_data):
     
     system = LVN()
     system.define_structure(L, H, Q, 1/Fs)
-    output_data = system.compute_output(input_data, alpha, w, c, offset)
+    output_data = system.compute_output(input_data, alpha, w, c, offset, False)
     
     return output_data
