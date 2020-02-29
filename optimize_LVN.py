@@ -21,22 +21,33 @@
 # SOFTWARE.
 
 import numpy as np
-from laguerre_volterra_network_structure import LVN
+import matplotlib.pyplot as plt
+import ant_colony_for_continuous_domains
+import optimization_utilities
 
-# Sampling frequency fixed at 25 Hz
-Fs = 25
+# Structural parameters  
+Fs = 25  
+L = 5;   H = 3;    Q = 4;
 
-# Simulate Laguerre-Volterra Network of arbitrary structure with randomized parameters
-def simulate_LVN(input_data, L, H, Q):
-    # Continuous parameters
-    alpha = np.random.uniform(0, 0.5)  
-    W = [list(np.random.random(L) * 2 - 1) for _ in range(H)]
-    C = [list(np.random.random(Q) * 2 - 1) for _ in range(H)]
-    offset = np.random.random()
-    system_parameters = [alpha, W, C, offset]
+# Parameters to be optimized
+alpha_min   = 0;    alpha_max   = 0.9   # approx lag with 0.9 is 263
+weight_min  = -1;  weight_max  = 1
+coef_min    = -1;  coef_max    = 1  
+offset_min  = -1;  offset_max  = 1
     
-    system = LVN()
-    system.define_structure(L, H, Q, 1/Fs)
-    output_data = system.compute_output(input_data, alpha, W, C, offset, False)
-    
-    return output_data, system_parameters
+# Setup ACOr and optimize
+num_iterations = 50
+ranges = []
+ranges.append([alpha_min,alpha_max])
+for _ in range(L * H): 
+    ranges.append([weight_min, weight_max])
+for _ in range(Q * H):
+    ranges.append([coef_min,coef_max])
+ranges.append([offset_min, offset_max])
+
+colony = ant_colony_for_continuous_domains.ACOr()
+colony.set_cost(optimization_utilities.define_cost(L, H, Q, Fs))
+colony.set_parameters(num_iterations, 5, 50, 0.01, 0.85)
+colony.set_variables(ranges)
+solution = colony.optimize()
+print(solution)

@@ -21,16 +21,10 @@
 # SOFTWARE.
 
 import numpy as np
-import math
-import matplotlib.pyplot as plt
-
-import laguerre_volterra_network_structure
-import ant_colony_for_continuous_domains
 import data_handling
+import laguerre_volterra_network_structure
 
-
-
-# Normalized mean swquared error
+# Normalized mean squared error
 def NMSE(y, y_pred, alpha):
     if len(y) != len(y_pred):
         print("Actual and predicted y have different lengths")
@@ -51,16 +45,10 @@ def NMSE(y, y_pred, alpha):
     
     return NMSE
 
-# Compute cost of candidate solution, which is encoded as a flat array: alpha, W(0,0) ... W(L-1,H-1), C(0,0) ... C(Q-1,H-1), offset
-def compute_cost(candidate_solution):
-    # IO
-    train_input, train_output = data_handling.read_io("finite_ord_train.csv")
     
-    # Structural parameters  
-    Fs = 25  
-    L = 5;   H = 1;    Q = 4;
-    
-    # Get parameters from candidate solution
+# Break flat list-like solution into [alpha, W, C, offset] for a given LVN structure
+def decode_solution(candidate_solution, L, H, Q):
+    # Identify solution members
     alpha = candidate_solution[0]
     flat_W = candidate_solution[1 : (H * L + 1)]
     flat_C = candidate_solution[(H * L + 1) : (H * L + 1) + H * Q]
@@ -73,42 +61,28 @@ def compute_cost(candidate_solution):
         W.append( flat_W[hidden_unit * L : (hidden_unit + 1) * L] )
         C.append( flat_C[hidden_unit * Q : (hidden_unit + 1) * Q] )
     
-    # Generate output and compute cost
-    solution_system = laguerre_volterra_network_structure.LVN()
-    solution_system.define_structure(L, H, Q, 1/Fs)
-    solution_output = solution_system.compute_output(train_input, alpha, W, C, offset, True)
+    return alpha, W, C, offset
     
-    cost = NMSE(train_output, solution_output, alpha)
-    
-    return cost
-    
-# Parameters to be optimized
-alpha_min   = 0;    alpha_max   = 0.9   # approx lag with 0.9 is 263
-weight_min  = -1;  weight_max  = 1
-coef_min    = -1;  coef_max    = 1  
-offset_min  = -1;  offset_max  = 1
-    
-# Setup ACOr and optimize
-colony = ant_colony_for_continuous_domains.ACOr()
-num_iterations = 50
-# Solution organization
-# alpha, w0, ..., wL-1, c1, ..., cQ, offset
+# Compute cost of candidate solution, which is encoded as a flat array: alpha, W(0,0) ... W(L-1,H-1), C(0,0) ... C(Q-1,H-1), offset
+def define_cost(L, H, Q, Fs):
+    # Cost computation parameterized by the nesting function (define_cost)
+    def compute_cost(candidate_solution, weights_modified):
+        # IO
+        train_input, train_output = data_handling.read_io("finite_ord_train.csv")
 
-# TODO: PARAMETERIZE
-ranges = [[alpha_min,alpha_max],
-          [weight_min,weight_max],
-          [weight_min,weight_max],
-          [weight_min,weight_max],
-          [weight_min,weight_max],
-          [weight_min,weight_max],
-          [coef_min,coef_max],
-          [coef_min,coef_max],
-          [coef_min,coef_max],
-          [coef_min,coef_max],
-          [offset_min,offset_max]]
+        # Get parameters from candidate solution
+        alpha, W, C, offset = decode_solution(candidate_solution, L, H, Q)
+        
+        # Generate output and compute cost
+        solution_system = laguerre_volterra_network_structure.LVN()
+        solution_system.define_structure(L, H, Q, 1/Fs)
+        solution_output = solution_system.compute_output(train_input, alpha, W, C, offset, weights_modified)
+        
+        cost = NMSE(train_output, solution_output, alpha)
+        
+        return cost
+        
+    return compute_cost
 
-colony.set_cost(compute_cost)
-colony.set_parameters(num_iterations, 5, 50, 0.01, 0.85)
-colony.set_variables(11, ranges)
-solution = colony.optimize()
-print(solution)
+
+    

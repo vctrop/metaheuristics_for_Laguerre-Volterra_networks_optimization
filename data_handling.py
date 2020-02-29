@@ -22,18 +22,33 @@
 
 import numpy as np
 import csv
-#import simulated_systems
+import simulated_systems
 
 # Generate IO data using a Gaussian White Noise (GWN) signal as input to enable the system to capture dynamics of frequency cross-terms
-def generate_io(num_samples, system_simulation, file_name):
+def generate_io(system_type, num_samples, file_name):
     input = np.random.standard_normal(size = num_samples)
-    output = system_simulation(input)
     
-    with open(file_name, mode = 'w', newline='') as file:
+    if system_type == "lvn":
+        L = 5; H = 3; Q = 4
+        output, system_parameters = simulated_systems.simulate_LVN(input, L, H, Q)
+        
+        system_file_name = file_name + "_system.dat"
+        with open(system_file_name, mode = 'w', newline='') as file:
+            writer = csv.writer(file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+            writer.writerow([L, H, Q])
+            for parameters in system_parameters:
+                writer.writerow([parameters])
+        
+    else:
+        #output = simulated_systems.simulate_trig_exp(input)
+        exit(-1)
+        
+    csv_name = file_name + ".csv"
+    with open(csv_name, mode = 'w', newline='') as file:
         csv_writer = csv.writer(file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
         csv_writer.writerow(input)
         csv_writer.writerow(output)
-
+    
 
 # Read IO data from CSVs
 def read_io(file_name):
@@ -54,13 +69,3 @@ def read_io(file_name):
             output.append(float( output_string[index]) )
         
     return input, output
-        
-        
-## Finite-order system
-# Write
-# generate_io(1024, simulated_systems.simulate_LVN, "finite_ord_train.csv")
-# generate_io(4096, simulated_systems.simulate_LVN, "finite_ord_test.csv")
-
-# Read
-# train_input, train_output = read_io("finite_ord_train.csv"))
-# test_input, test_output = read_io("finite_ord_test.csv"))

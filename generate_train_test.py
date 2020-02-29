@@ -20,23 +20,10 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import numpy as np
-from laguerre_volterra_network_structure import LVN
+import data_handling
 
-# Sampling frequency fixed at 25 Hz
-Fs = 25
+## Generate train and test data
+#Finite-order system
+data_handling.generate_io("lvn", 1024, "finite_ord_train")
+data_handling.generate_io("lvn", 4096, "finite_ord_test")
 
-# Simulate Laguerre-Volterra Network of arbitrary structure with randomized parameters
-def simulate_LVN(input_data, L, H, Q):
-    # Continuous parameters
-    alpha = np.random.uniform(0, 0.5)  
-    W = [list(np.random.random(L) * 2 - 1) for _ in range(H)]
-    C = [list(np.random.random(Q) * 2 - 1) for _ in range(H)]
-    offset = np.random.random()
-    system_parameters = [alpha, W, C, offset]
-    
-    system = LVN()
-    system.define_structure(L, H, Q, 1/Fs)
-    output_data = system.compute_output(input_data, alpha, W, C, offset, False)
-    
-    return output_data, system_parameters
