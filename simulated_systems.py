@@ -52,4 +52,20 @@ def simulate_LVN_deterministic(input_data, L, H, Q, parameters):
     output_data = system.compute_output(input_data, alpha, W, C, offset, False)
     
     return output_data
+
+
+def simulate_LVN_geng(input_data):
+    alpha = 0.1
+    W = [[1, 0, 1, 1], [-1, 1, 2, 0.5]]
+    C = [[1, -1], [1, 0.5]]
+    offset = 0.0
     
+    parameters = [alpha, W, C , offset]
+    
+    L = len(W[0])
+    H = len(W)
+    Q = len(C[0])
+    
+    output = simulate_LVN_deterministic(input_data, L, H, Q, parameters)
+    
+    return output, parameters

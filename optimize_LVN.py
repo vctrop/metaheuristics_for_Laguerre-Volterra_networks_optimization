@@ -37,7 +37,7 @@ coef_min    = -1;  coef_max    = 1
 offset_min  = -1;  offset_max  = 1
     
 # Setup ACOr and optimize
-num_iterations = 10000
+num_iterations = 1000
 ranges = []
 ranges.append([alpha_min,alpha_max])
 for _ in range(L * H): 
@@ -45,13 +45,13 @@ for _ in range(L * H):
 for _ in range(Q * H):
     ranges.append([coef_min,coef_max])
 ranges.append([offset_min, offset_max])
-
+    
 colony = ant_colony_for_continuous_domains.ACOr()
-colony.set_verbosity(False)
-colony.set_cost(optimization_utilities.define_cost(L, H, Q, Fs))
+colony.set_verbosity(True)
+colony.set_cost(optimization_utilities.define_cost(L, H, Q, Fs, "geng_train.csv"))
 colony.set_parameters(num_iterations, 5, 50, 0.01, 0.85)
 colony.set_variables(ranges)
 solution = colony.optimize()
 
 system_parameters = optimization_utilities.decode_solution(solution, L, H, Q)
-data_handling.write_LVN_file("acor_10k_global_iter", system_parameters)
+data_handling.write_LVN_file("acor_1k_geng", system_parameters)

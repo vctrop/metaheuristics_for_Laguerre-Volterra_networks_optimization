@@ -64,11 +64,11 @@ def decode_solution(candidate_solution, L, H, Q):
     return alpha, W, C, offset
     
 # Compute cost of candidate solution, which is encoded as a flat array: alpha, W(0,0) ... W(L-1,H-1), C(0,0) ... C(Q-1,H-1), offset
-def define_cost(L, H, Q, Fs):
+def define_cost(L, H, Q, Fs, train_filename):
     # Cost computation parameterized by the nesting function (define_cost)
     def compute_cost(candidate_solution, weights_modified):
         # IO
-        train_input, train_output = data_handling.read_io("finite_ord_train.csv")
+        train_input, train_output = data_handling.read_io(train_filename)
 
         # Get parameters from candidate solution
         alpha, W, C, offset = decode_solution(candidate_solution, L, H, Q)

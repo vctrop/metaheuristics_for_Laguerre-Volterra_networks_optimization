@@ -71,6 +71,9 @@ def generate_io(system_type, num_samples, file_name, deterministic_parameters):
             output = simulated_systems.simulate_LVN_deterministic(input, L, H, Q, deterministic_parameters)
             
         write_LVN_file(file_name, deterministic_parameters)
+    elif system_type == "geng":
+        output, geng_parameters = simulated_systems.simulate_LVN_geng(input)
+        write_LVN_file(file_name, geng_parameters)
     else:
         #output = simulated_systems.simulate_trig_exp(input)
         exit(-1)
