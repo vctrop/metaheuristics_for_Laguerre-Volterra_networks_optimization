@@ -27,7 +27,7 @@ from laguerre_volterra_network_structure import LVN
 Fs = 25
 
 # Simulate Laguerre-Volterra Network of arbitrary structure with randomized parameters
-def simulate_LVN(input_data, L, H, Q):
+def simulate_LVN_random(input_data, L, H, Q):
     # Continuous parameters
     alpha = np.random.uniform(0, 0.5)  
     W = [list(np.random.random(L) * 2 - 1) for _ in range(H)]
@@ -40,3 +40,16 @@ def simulate_LVN(input_data, L, H, Q):
     output_data = system.compute_output(input_data, alpha, W, C, offset, False)
     
     return output_data, system_parameters
+    
+def simulate_LVN_deterministic(input_data, L, H, Q, parameters):
+    alpha = parameters[0]
+    W = parameters[1]
+    C = parameters[2]
+    offset = parameters[3]
+    
+    system = LVN()
+    system.define_structure(L, H, Q, 1/Fs)
+    output_data = system.compute_output(input_data, alpha, W, C, offset, False)
+    
+    return output_data
+    
