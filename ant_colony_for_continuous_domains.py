@@ -25,9 +25,9 @@ class ACOr:
         self.xi = 0.85                                  # Speed of convergence
         
         # Initial (NULL) problem definition
-        self.num_var = None                             # Number of variables
+        self.num_variables = None                             # Number of variables
         self.initial_ranges = []                        # Initialization boundaries for each variable
-        self.is_constrained = []                        # Here, if a variable is constrained, it will be limited to its initialization boundaries for all the search
+        self.is_bounded = []                            # Here, if a variable is constrained, it will be limited to its initialization boundaries for all the search
         self.cost_function = None                       # Cost function to guide the search
         
         # Optimization results
@@ -37,17 +37,21 @@ class ACOr:
         
     def set_verbosity(self, status):
         """ If verbosity is set True, print partial results of the search will be printed """
+        # Input error checking
         if not (type(status) is bool):
             print("Error, verbosity parameter must be a boolean")
             exit(-1)
+            
         self.verbosity = status
     
         
     def set_parameters(self, num_iter, pop_size, k, q, xi):
         """ Define values for the parameters used by the algorithm """
+        # Input error checking
         if num_iter <= 0:
             print("Number of iterations must be greater than zero")
             exit(-1)
+            
         self.num_iter = num_iter
         self.pop_size = pop_size
         self.k = k
@@ -57,7 +61,7 @@ class ACOr:
     
     def define_variables(self, initial_ranges, is_bounded):
         """ Defines the number of variables, their initial values ranges and wether or not these ranges constrain the variable during the search """
-        # Error checking
+        # Input error checking
         if self.num_iter == 0:
             print("Error, please set algorithm parameters before variables definition")
             exit(-1)
@@ -68,10 +72,10 @@ class ACOr:
             print("Error, the number of variables for initial_ranges and is_bounded must be equal")
             exit(-1)
         
-        self.num_var = len(initial_ranges)
+        self.num_variables = len(initial_ranges)
         self.initial_ranges = initial_ranges
         self.is_bounded = is_bounded
-        self.SA = np.zeros((self.k, self.num_var + 1))
+        self.SA = np.zeros((self.k, self.num_variables + 1))
         
             
     def set_cost(self, costf):
@@ -90,24 +94,23 @@ class ACOr:
          
     def optimize(self):
         """ Initializes the archive and enter the main loop, until it reaches maximum number of iterations """
-        # Sanity check
-        if self.num_var == 0:
+        # Input error checking
+        if self.num_variables == None:
             print("Error, first set the number of variables and their boundaries")
             exit(-1)
-        
         if self.cost_function == None:
             print("Error, first define the cost function to be used")
             exit(-1)
-            
+        
+        # Initialize the archive by random sampling, respecting each variable's boundaries   
         if self.verbosity:   print("[INITIALIZING SOLUTION ARCHIVE]")
-        # Initialize the archive by random sampling, respecting each variable's constraints
-        pop = np.zeros((self.pop_size, self.num_var +1))
+        pop = np.zeros((self.pop_size, self.num_variables +1))
         w = np.zeros(self.k)
         
         for i in range(self.k):
-            for j in range(self.num_var): 
+            for j in range(self.num_variables): 
                 self.SA[i, j] = np.random.uniform(self.initial_ranges[j][0], self.initial_ranges[j][1])        # Initialize solution archive randomly
-            self.SA[i, -1] = self.cost_function(self.SA[i, 0:self.num_var], True)                            # Get initial cost for each solution
+            self.SA[i, -1] = self.cost_function(self.SA[i, 0:self.num_variables], True)                            # Get initial cost for each solution
         self.SA = self.SA[self.SA[:, -1].argsort()]                                                    # Sort solution archive (best solutions first)
 
         x = np.linspace(1,self.k,self.k) 
@@ -122,11 +125,11 @@ class ACOr:
                 print("[%d]" % iteration)
                 print(self.SA[0, :])
             
-            Mi = self.SA[:, 0:self.num_var]                                                                     # Matrix of means
+            Mi = self.SA[:, 0:self.num_variables]                                                                     # Matrix of means
             for ant in range(self.pop_size):                                                                   # For each ant in the population
                 l = self._biased_selection(p)                                                                   # Select solution of the SA to sample from based on probabilities p
                 
-                for var in range(self.num_var):                                                                # Calculate the standard deviation of all variables from solution l
+                for var in range(self.num_variables):                                                                # Calculate the standard deviation of all variables from solution l
                     sigma_sum = 0
                     for i in range(self.k):
                         sigma_sum += abs(self.SA[i, var] - self.SA[l, var])
@@ -147,7 +150,7 @@ class ACOr:
                             # pop[ant, var] = np.random.uniform(self.initial_ranges[var][0], self.initial_ranges[var][1])
                     
                     
-                pop[ant, -1] = self.cost_function(pop[ant, 0:self.num_var], True)                                     # Evaluate cost of new solution
+                pop[ant, -1] = self.cost_function(pop[ant, 0:self.num_variables], True)                                     # Evaluate cost of new solution
                 
             self.SA = np.append(self.SA, pop, axis = 0)                                                         # Append new solutions to the Archive
             self.SA = self.SA[self.SA[:, -1].argsort()]                                                         # Sort solution archive according to the fitness of each solution
@@ -155,5 +158,3 @@ class ACOr:
         
         self.best_solution = self.SA[0, :]
         return self.best_solution  
-
-# end class 

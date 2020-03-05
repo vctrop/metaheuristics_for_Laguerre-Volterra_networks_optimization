@@ -20,11 +20,15 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+# Third party modules
 import numpy as np
 import matplotlib.pyplot as plt
-import ant_colony_for_continuous_domains
+# Utilities
 import optimization_utilities
 import data_handling
+# Metaheuristics
+import ant_colony_for_continuous_domains
+import simulated_annealing
 
 # Structural parameters  
 Fs = 25  
@@ -36,9 +40,6 @@ weight_min  = -1;   weight_max  = 1
 coef_min    = -1;   coef_max    = 1  
 offset_min  = -1;   offset_max  = 1
     
-# Setup ACOr and optimize
-num_iterations = 1000
-
 # Define the ranges to be used in random initialization of algorithms for each variable,
 #  along with which variables are bounded by these ranges during the optimization
 initial_ranges = []
@@ -59,12 +60,31 @@ for _ in range(Q * H):
 initial_ranges.append([offset_min, offset_max])
 is_bounded.append(False)
     
-colony = ant_colony_for_continuous_domains.ACOr()
-colony.set_verbosity(True)
-colony.set_cost(optimization_utilities.define_cost(L, H, Q, Fs, "geng_train.csv"))
-colony.set_parameters(num_iterations, 5, 50, 0.01, 0.85)
-colony.define_variables(initial_ranges, is_bounded)
-solution = colony.optimize()
+# Optimization
+# ACOr
+print("ACOr")
+# ACOr total # of function evaluations: k + population_size * num_iterations
+ACOr_num_iterations = 20
+ACOr = ant_colony_for_continuous_domains.ACOr()
+ACOr.set_verbosity(True)
+ACOr.set_cost(optimization_utilities.define_cost(L, H, Q, Fs, "geng_train.csv"))
+ACOr.set_parameters(ACOr_num_iterations, 5, 50, 0.01, 0.85)
+ACOr.define_variables(initial_ranges, is_bounded)
+ACOr.optimize()
+# ACOr_solution = ACOr.optimize()
+# print(ACOr_solution)
+
+# SA
+print("SA")
+SA_local_iterations = 10
+SA_global_iterations = 15 
+SA = simulated_annealing.SA()
+SA.set_verbosity(True)
+SA.set_cost(optimization_utilities.define_cost(L, H, Q, Fs, "geng_train.csv"))
+SA.set_parameters(SA_global_iterations, SA_local_iterations, 10.0, 0.99, 1e-2)
+SA.define_variables(initial_ranges, is_bounded)
+SA.optimize()
+
 
 #system_parameters = optimization_utilities.decode_solution(solution, L, H, Q)
 #data_handling.write_LVN_file("acor_1k_geng", system_parameters)

@@ -52,7 +52,7 @@ def decode_solution(candidate_solution, L, H, Q):
     alpha = candidate_solution[0]
     flat_W = candidate_solution[1 : (H * L + 1)]
     flat_C = candidate_solution[(H * L + 1) : (H * L + 1) + H * Q]
-    offset = candidate_solution[-1]
+    offset = candidate_solution[(H * L + 1) + H * Q]
     
     # de-flat W and C
     W = []
@@ -66,13 +66,21 @@ def decode_solution(candidate_solution, L, H, Q):
 # Compute cost of candidate solution, which is encoded as a flat array: alpha, W(0,0) ... W(L-1,H-1), C(0,0) ... C(Q-1,H-1), offset
 def define_cost(L, H, Q, Fs, train_filename):
     # Cost computation parameterized by the nesting function (define_cost)
-    def compute_cost(candidate_solution, weights_modified):
+    # modified_variable indicates which parameters were modified in the solution. -1 if all of them were.
+    def compute_cost(candidate_solution, modified_variable):
+        
         # IO
         train_input, train_output = data_handling.read_io(train_filename)
 
         # Get parameters from candidate solution
         alpha, W, C, offset = decode_solution(candidate_solution, L, H, Q)
         
+        # If the weights were modified, set flag so LVN normalizes weights and scales coefficients before output computation 
+        if modified_variable == -1 or (modified_variable >= 1 and modified_variable <= L * H):
+            weights_modified = True
+        else:
+            weights_modified = False
+            
         # Generate output and compute cost
         solution_system = laguerre_volterra_network_structure.LVN()
         solution_system.define_structure(L, H, Q, 1/Fs)
