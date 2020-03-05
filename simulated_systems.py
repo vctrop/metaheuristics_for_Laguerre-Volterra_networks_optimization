@@ -31,7 +31,7 @@ def simulate_LVN_random(input_data, L, H, Q):
     # Continuous parameters
     alpha = np.random.uniform(0, 0.5)  
     W = [list(np.random.random(L) * 2 - 1) for _ in range(H)]
-    C = [list(np.random.random(Q) * 2 - 1) for _ in range(H)]
+    C = [list(np.random.random(Q) * 4 - 2) for _ in range(H)]
     offset = np.random.random()
     system_parameters = [alpha, W, C, offset]
     
@@ -40,6 +40,7 @@ def simulate_LVN_random(input_data, L, H, Q):
     output_data = system.compute_output(input_data, alpha, W, C, offset, False)
     
     return output_data, system_parameters
+    
     
 def simulate_LVN_deterministic(input_data, L, H, Q, parameters):
     alpha = parameters[0]

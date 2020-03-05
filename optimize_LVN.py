@@ -28,30 +28,43 @@ import data_handling
 
 # Structural parameters  
 Fs = 25  
-L = 5;   H = 3;    Q = 4;
+L = 4;   H = 2;    Q = 2;
 
 # Parameters to be optimized
-alpha_min   = 0;    alpha_max   = 0.9   # approx lag with 0.9 is 263
-weight_min  = -1;  weight_max  = 1
-coef_min    = -1;  coef_max    = 1  
-offset_min  = -1;  offset_max  = 1
+alpha_min   = 1e-5; alpha_max   = 0.9   # estimated lag with alpha = 0.9 is 263
+weight_min  = -1;   weight_max  = 1
+coef_min    = -1;   coef_max    = 1  
+offset_min  = -1;   offset_max  = 1
     
 # Setup ACOr and optimize
 num_iterations = 1000
-ranges = []
-ranges.append([alpha_min,alpha_max])
+
+# Define the ranges to be used in random initialization of algorithms for each variable,
+#  along with which variables are bounded by these ranges during the optimization
+initial_ranges = []
+is_bounded = []
+
+# Alpha variable is bounded
+initial_ranges.append([alpha_min,alpha_max])
+is_bounded.append(True)
+# Hidden units input weights are forcedly bounded by l2-normalization (normalization to unit Euclidean norm)
 for _ in range(L * H): 
-    ranges.append([weight_min, weight_max])
+    initial_ranges.append([weight_min, weight_max])
+    is_bounded.append(False)
+# Polynomial coefficients are not bounded in the initial range
 for _ in range(Q * H):
-    ranges.append([coef_min,coef_max])
-ranges.append([offset_min, offset_max])
+    initial_ranges.append([coef_min,coef_max])
+    is_bounded.append(False)
+# Output offset is not bounded in the initial range
+initial_ranges.append([offset_min, offset_max])
+is_bounded.append(False)
     
 colony = ant_colony_for_continuous_domains.ACOr()
 colony.set_verbosity(True)
 colony.set_cost(optimization_utilities.define_cost(L, H, Q, Fs, "geng_train.csv"))
 colony.set_parameters(num_iterations, 5, 50, 0.01, 0.85)
-colony.set_variables(ranges)
+colony.define_variables(initial_ranges, is_bounded)
 solution = colony.optimize()
 
-system_parameters = optimization_utilities.decode_solution(solution, L, H, Q)
-data_handling.write_LVN_file("acor_1k_geng", system_parameters)
+#system_parameters = optimization_utilities.decode_solution(solution, L, H, Q)
+#data_handling.write_LVN_file("acor_1k_geng", system_parameters)

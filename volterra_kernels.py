@@ -21,7 +21,7 @@
 # SOFTWARE.
 
 # Given a Laguerre-Volterra Network, plot corresponding low-order Volterra kernels
-
+import sys
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.special import binom
@@ -30,6 +30,11 @@ from matplotlib import cm
 from matplotlib.ticker import LinearLocator, FormatStrFormatter
 import laguerre_volterra_network_structure
 import data_handling
+
+if len(sys.argv) != 2:
+    print("Error, specify the LVN file to extract kernels from")
+    print("E.g. \"py volterra_kernels.py my_sys.LVN\" ")
+    exit(-1)
 
 def laguerre_convolution_kernel(order, sample, alpha):
     sum = 0.0
@@ -40,7 +45,7 @@ def laguerre_convolution_kernel(order, sample, alpha):
     return output
     
 #LVN_parameters = data_handling.read_LVN_file("finite_ord_train_system.LVN")
-LVN_parameters = data_handling.read_LVN_file("geng_train_system.LVN")
+LVN_parameters = data_handling.read_LVN_file(sys.argv[1])
 print(np.shape(LVN_parameters[2]))
 alpha = LVN_parameters[0]
 W = np.array(LVN_parameters[1])
