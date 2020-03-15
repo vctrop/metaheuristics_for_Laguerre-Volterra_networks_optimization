@@ -21,14 +21,13 @@
 # SOFTWARE.
     
 import numpy as np
+from base_metaheuristic import Base
     
-class PSO:
+class PSO(Base):
     """ Class for the Adaptative Inertia Weight Particle Swarm Optimization (AIWPSO), following (Nickabadi et al., 2011) """
 
     def __init__(self):
         """ Constructor """
-        self.verbosity = True
-        
         # I nitial algorithm parameters
         self.num_iter = 0
         self.population_size = 0
@@ -36,28 +35,13 @@ class PSO:
         self.global_weight = 0.5
         #self.inertia_max = 1.0
         #self.inertia_min = 0.0
-        
-        # Initial (NULL) problem definition
-        self.num_variables = None                             # Number of variables
-        self.initial_ranges = []                        # Initialization boundaries for each variable
-        self.is_bounded = []                            # Here, if a variable is constrained, it will be limited to its initialization boundaries for all the search
-        self.cost_function = None                       # Cost function to guide the search
-        
+
         # Optimization results
         self.swarm_positions = None
         self.swarm_velocities = None
         self.personal_bests = None
         self.global_best = None
         
-    def set_verbosity(self, status):
-        """ If verbosity is set True, print partial results of the search will be printed """
-        # Input error checking
-        if not (type(status) is bool):
-            print("Error, verbosity parameter must be a boolean")
-            exit(-1)
-            
-        self.verbosity = status
-    
         
     def set_parameters(self, num_iter, population_size, personal_weight, global_weight):
         """ Define values for the parameters used by the algorithm """
@@ -102,11 +86,7 @@ class PSO:
         self.global_best = np.zeros(self.num_variables + 1)
         self.global_best[-1] = float('inf')
             
-    def set_cost(self, costf):
-        """ Sets the cost function that will guide the search """
-        self.cost_function = costf
-        
-         
+
     def optimize(self):
         """ Initializes the archive and enter the main loop, until it reaches maximum number of iterations """
         # Variables and cost function must be defined prior to optimization

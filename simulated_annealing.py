@@ -21,14 +21,13 @@
 # SOFTWARE.
 
 import numpy as np
+from base_metaheuristic import Base
 import math
 
-class SA:
+class SA(Base):
     """ Class for the Simulated Annealing optimizer (Kirkpatrick et al., 1983), with pertubation on continuous variable as in (Geng and Marmarelis, 2016) and using exponential decay cooling schedule (Nourani and Andresen, 1998) """
         
     def __init__(self):
-        self.verbosity = True
-        
         # Initial algorithm parameters
         self.num_global_iter = 0                        # Maximum number of global iterations
         self.num_local_iter = 0                         # Maximum number of local iterations
@@ -36,25 +35,9 @@ class SA:
         self.cooling_constant = 0.99                    # Parameter for the exponential decay cooling schedule
         self.step_size = 1e-2                           # Technically each variable type has its own step size, but (Geng and Marmarelis, 2016) uses the same step for all variables
         
-        # Initial (NULL) problem definition
-        self.num_variables = None                       # Number of variables
-        self.initial_ranges = []                        # Initialization boundaries for each variable
-        self.is_bounded = []                            # Here, if a variable is constrained, it will be limited to its initialization boundaries for all the search
-        self.cost_function = None                       # Cost function to guide the search
-        
         # Optimization results
         self.current_solution = None                    # Set of variables that define the current solution, with its cost as the last element of the list
-        self.best_solution = None                       # Best solution encountered in the search process    
-        
-        
-    def set_verbosity(self, status):
-        """ If status is True, will print partial results during the search """
-        # Input error checking
-        if not (type(status) is bool):
-            print("Error, verbosity parameter must be a boolean")
-            exit(-1)
-            
-        self.verbosity = status    
+        self.best_solution = None                       # Best solution of the archive
         
         
     def set_parameters(self, num_global_iter, num_local_iter, initial_temperature, cooling_constant, step_size):
@@ -88,12 +71,7 @@ class SA:
         self.initial_ranges = initial_ranges
         self.is_bounded = is_bounded
         self.current_solution = np.zeros(self.num_variables + 1)
-        
-    
-    def set_cost(self, cost_function):
-        """ Define the cost function that will guide the search procedure """
-        self.cost_function = cost_function
-        
+      
         
     def optimize(self):
         """ Generate a random initial solution and enter the algorithm loop until the number of global iterations is reached """

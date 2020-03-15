@@ -22,14 +22,13 @@
     
 import numpy as np
 from scipy.stats import norm
+from base_metaheuristic import Base
 
-class ACOr:
+class ACOr(Base):
     """ Class for the Ant Colony Optimization for Continuous Domains, following (Socha and Dorigo, 2006) """
 
     def __init__(self):
         """ Constructor """
-        self.verbosity = True
-        
         # Initial algorithm parameters
         self.num_iter = 0                               # Number of iterations
         self.pop_size = 5                               # Population size
@@ -37,27 +36,11 @@ class ACOr:
         self.q = 0.1                                    # Locality of search
         self.xi = 0.85                                  # Speed of convergence
         
-        # Initial (NULL) problem definition
-        self.num_variables = None                             # Number of variables
-        self.initial_ranges = []                        # Initialization boundaries for each variable
-        self.is_bounded = []                            # Here, if a variable is constrained, it will be limited to its initialization boundaries for all the search
-        self.cost_function = None                       # Cost function to guide the search
-        
         # Optimization results
         self.SA = None                                  # Solution Archive
         self.best_solution = None                       # Best solution of the archive
 
-        
-    def set_verbosity(self, status):
-        """ If verbosity is set True, print partial results of the search will be printed """
-        # Input error checking
-        if not (type(status) is bool):
-            print("Error, verbosity parameter must be a boolean")
-            exit(-1)
-            
-        self.verbosity = status
-    
-        
+
     def set_parameters(self, num_iter, pop_size, k, q, xi):
         """ Define values for the parameters used by the algorithm """
         # Input error checking
@@ -89,12 +72,7 @@ class ACOr:
         self.initial_ranges = initial_ranges
         self.is_bounded = is_bounded
         self.SA = np.zeros((self.k, self.num_variables + 1))
-        
-            
-    def set_cost(self, costf):
-        """ Sets the cost function that will guide the search """
-        self.cost_function = costf
-        
+
     
     def _biased_selection(self, probabilities):
         """ Returns an index based on a set of probabilities (also known as roulette wheel selection in GA) """
