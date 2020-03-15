@@ -146,7 +146,7 @@ class SA:
                 delta_J = candidate_solution[-1] - self.current_solution[-1] 
                 if delta_J < 0:
                     acceptance_probability = 1.0
-                    if candidate_solution[-1] < best_solution[-1]:
+                    if candidate_solution[-1] < self.best_solution[-1]:
                         self.best_solution = np.array(candidate_solution)
                 else:
                     acceptance_probability = math.exp(-delta_J/self.temperature)
