@@ -25,9 +25,13 @@ from base_metaheuristic import Base
 import math
 
 class SA(Base):
-    """ Class for the Simulated Annealing optimizer (Kirkpatrick et al., 1983), with pertubation on continuous variable as in (Geng and Marmarelis, 2016) and using exponential decay cooling schedule (Nourani and Andresen, 1998) """
-        
+    """ Class for the Simulated Annealing optimizer as described in (Poli et al., 2007) with pertubation on continuous variable as in (Geng and Marmarelis, 2016) and using exponential decay cooling schedule (Nourani and Andresen, 1998) """    
+    
     def __init__(self):
+        """ Constructor """
+        # Define verbosity and NULL problem definition
+        super().__init__
+        
         # Initial algorithm parameters
         self.num_global_iter = 0                        # Maximum number of global iterations
         self.num_local_iter = 0                         # Maximum number of local iterations
@@ -39,6 +43,9 @@ class SA(Base):
         self.current_solution = None                    # Set of variables that define the current solution, with its cost as the last element of the list
         self.best_solution = None                       # Best solution of the archive
         
+        # Flag for modified SA
+        self.adaptive_generation = False                # Adaptive solution generation using crystalization factor from (Martins et al., 2012)
+        self.crystalization_factor = None
         
     def set_parameters(self, num_global_iter, num_local_iter, initial_temperature, cooling_constant, step_size):
         """ Define values for the parameters used by the algorithm """
@@ -71,6 +78,10 @@ class SA(Base):
         self.initial_ranges = initial_ranges
         self.is_bounded = is_bounded
         self.current_solution = np.zeros(self.num_variables + 1)
+        
+        if self.adaptive_generation == True:
+            print("ADAPTIVE GENERATION")
+            self.crystalization_factor = np.ones(self.num_variables)
       
         
     def optimize(self):
@@ -106,8 +117,15 @@ class SA(Base):
                 random_sign = (-1) ** np.random.randint(0,2)
                 # Choose which variable will be pertubated
                 chosen_variable = np.random.randint(0, self.num_variables)      # [0, num_variables)
-                # Pertubate the chosen variable according to the random sign and step size
-                pertubated_variable = self.current_solution[chosen_variable] + random_sign * self.step_size
+                
+                # New solution generation may have a fixed step or follow an adaptive heuristic
+                if self.adaptive_generation == False:
+                    # Pertubate the chosen variable according to the random sign and step size
+                    pertubated_variable = self.current_solution[chosen_variable] + random_sign * self.step_size
+                else:
+                    # Pertubate the chosen variable using the Adaptive Crystalization Factor heuristic
+                    random_array = np.random.uniform(low = -0.5, high = 0.5, size = math.ceil(self.crystalization_factor[chosen_variable]))
+                    pertubated_variable = self.current_solution[chosen_variable] + (1 / self.crystalization_factor[chosen_variable]) * np.sum(random_array)
                 
                 # For bounded variables, deal with search space violation using the hard border strategy
                 if self.is_bounded[chosen_variable]:
@@ -129,11 +147,31 @@ class SA(Base):
                 else:
                     acceptance_probability = math.exp(-delta_J/self.temperature)
                 
+                # Candidate accepted
                 if np.random.rand() <= acceptance_probability:
-                    if candidate_solution[chosen_variable] != pertubated_variable:
-                        print("BIG FUCKING ERROR")
-                        exit(-2)
                     self.current_solution[chosen_variable] = candidate_solution[chosen_variable]
                     self.current_solution[-1] = candidate_solution[-1]
+                    
+                    # When using adaptive candidate generation
+                    if self.adaptive_generation == True:
+                        # Update crystalization_factor of the chosen variable using positive feedback strategy C
+                        self.crystalization_factor[chosen_variable] /= 4
+                # Candidate rejected
+                else:
+                    # When using adaptive candidate generation
+                    if self.adaptive_generation == True:
+                        # Update crystalization_factor of the chosen variable using negative feedback
+                        self.crystalization_factor[chosen_variable] += 1
         
+        print(self.crystalization_factor)
         return self.best_solution
+
+        
+class ACF_SA(SA):
+    """ Simulated annealing using adaptive solution generation based in the feedback (positive feedback C and negative feedback) heuristics described in (Martins et al., 2012) """
+    
+    def __init__(self):
+        """ Constructor """
+        # Define verbosity and NULL problem definition
+        super().__init__
+        self.adaptive_generation = True
