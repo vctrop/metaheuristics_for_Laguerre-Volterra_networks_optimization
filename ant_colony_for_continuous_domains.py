@@ -29,6 +29,9 @@ class ACOr(Base):
 
     def __init__(self):
         """ Constructor """
+        # Define verbosity and NULL problem definition
+        super().__init__()
+        
         # Initial algorithm parameters
         self.num_iter = 0                               # Number of iterations
         self.pop_size = 5                               # Population size

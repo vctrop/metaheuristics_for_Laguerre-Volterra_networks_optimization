@@ -24,23 +24,28 @@ import numpy as np
 from base_metaheuristic import Base
     
 class PSO(Base):
-    """ Class for the Adaptative Inertia Weight Particle Swarm Optimization (AIWPSO), following (Nickabadi et al., 2011) """
+    """ Class for the Particle Swarm Optimization algorithm (PSO), following (Poli et al., 2007) """
 
     def __init__(self):
         """ Constructor """
-        # I nitial algorithm parameters
+        # Define verbosity and NULL problem definition
+        super().__init__
+        
+        # Initial algorithm parameters
         self.num_iter = 0
         self.population_size = 0
         self.personal_weight = 0.5
         self.global_weight = 0.5
-        #self.inertia_max = 1.0
-        #self.inertia_min = 0.0
-
+        
         # Optimization results
         self.swarm_positions = None
         self.swarm_velocities = None
         self.personal_bests = None
         self.global_best = None
+        
+        # Flag for modified PSO
+        self.adaptive_inertia = False
+        self.inertia_weight = 1.0                   # Inertia weight constant at one is the same as no inertia weight
         
         
     def set_parameters(self, num_iter, population_size, personal_weight, global_weight):
@@ -82,11 +87,17 @@ class PSO(Base):
         self.swarm_positions = np.zeros((self.population_size, self.num_variables + 1))
         self.swarm_velocities = np.zeros((self.population_size, self.num_variables))
         
+        # Personal and global bests initially have infinite cost
         self.personal_bests = np.zeros((self.population_size, self.num_variables + 1))
+        self.personal_bests[:, -1] = float('inf')
         self.global_best = np.zeros(self.num_variables + 1)
         self.global_best[-1] = float('inf')
             
 
+    def update_inertia_weight(self, acceptance_count):
+        pass
+            
+            
     def optimize(self):
         """ Initializes the archive and enter the main loop, until it reaches maximum number of iterations """
         # Variables and cost function must be defined prior to optimization
@@ -97,27 +108,43 @@ class PSO(Base):
             print("Error, cost function must be defined prior to optimization")
             exit(-1)
         
-        # Initialize swarm positions and velocities randomly (population_size cost function evaluations)
+        # Initialize swarm positions and velocities randomly
         for i in range(self.population_size):
             for j in range(self.num_variables):
                 self.swarm_positions[i, j] = np.random.uniform(self.initial_ranges[j][0], self.initial_ranges[j][1])
                 self.swarm_velocities[i, j] = np.random.uniform(self.initial_ranges[j][0], self.initial_ranges[j][1])
-            self.swarm_positions[i, -1] = self.cost_function(self.swarm_positions[i, :-1], -1)
-            # Update global best
-            if self.swarm_positions[i, -1] < self.global_best[-1]:
-                self.global_best = self.swarm_positions[i, :] 
-        
-        self.personal_bests = np.array(self.swarm_positions)
-        
+            
         # Main optimization loop (population_size * num_iter cost function evaluations)
         for iteration in range(self.num_iter):
+            # When using adaptive inertia weight
+            acceptance_count = 0
+            
             for particle in range(self.population_size):
+                # Compute cost of new position
+                self.swarm_positions[particle, -1] = self.cost_function(self.swarm_positions[particle, :-1], -1)
+                
+                # Update personal best solution
+                if self.swarm_positions[particle, -1] < self.personal_bests[particle, -1]:
+                    self.personal_bests[particle, :] = self.swarm_positions[particle, :]
+                    
+                    # When using adaptive inertia weight
+                    if self.adaptive_inertia == True:
+                        acceptance_count += 1
+                    
+                    # Update global best solution
+                    if self.personal_bests[particle, -1] < self.global_best[-1]:
+                        self.global_best = self.personal_bests[particle, :]
+                
+                # When using adaptive inertia weight
+                self.update_inertia_weight(acceptance_count)
+                print(self.inertia_weight)
                 # Update velocity vector
-                self.swarm_velocities[particle, :] =    (self.swarm_velocities[particle, :]
+                self.swarm_velocities[particle, :] =    self.inertia_weight * (self.swarm_velocities[particle, :]
                                                         + self.personal_weight  * np.random.rand() * (self.personal_bests[particle, :-1]    - self.swarm_positions[particle, :-1])
                                                         + self.global_weight    * np.random.rand() * (self.global_best[:-1]                 - self.swarm_positions[particle, :-1]))
                 # Update position vector
                 self.swarm_positions[particle, :-1] = self.swarm_positions[particle, :-1] + self.swarm_velocities[particle, :]
+                
                 # Restrict search for bounded variables
                 for var in range(self.num_variables):
                     if self.is_bounded[var]:
@@ -127,14 +154,26 @@ class PSO(Base):
                         elif self.swarm_positions[particle, var] > self.initial_ranges[var][1]:
                             self.swarm_positions[particle, var] = self.initial_ranges[var][1]        
                 
-                # Compute cost of new position
-                self.swarm_positions[particle, -1] = self.cost_function(self.swarm_positions[particle, :-1], -1)
-                # Update personal best solution
-                if self.swarm_positions[particle, -1] < self.personal_bests[particle, -1]:
-                    self.personal_bests[particle, :] = self.swarm_positions[particle, :]
-                    # Update global best solution
-                    if self.personal_bests[particle, -1] < self.global_best[-1]:
-                        self.global_best = self.personal_bests[particle, :]
                 
-        
         return self.global_best
+        
+        
+class AIW_PSO(PSO):
+    """ Class for the Adaptative Inertia Weight Particle Swarm Optimization (AIWPSO), following (Nickabadi et al., 2011) """
+    def __init__(self):
+        """ Constructor """
+        # Define verbosity and NULL problem definition
+        super().__init__()
+        
+        self.adaptive_inertia = True
+        self.max_inertia = 1.0
+        self.min_inertia = 0.0
+    
+    def set_parameters(self, num_iter, population_size, personal_weight, global_weight, min_inertia, max_inertia):
+        super().set_parameters(num_iter, population_size, personal_weight, global_weight)
+        self.min_inertia = min_inertia
+        self.max_inertia = max_inertia
+        
+    def update_inertia_weight(self, acceptance_count):
+        success_percentage = acceptance_count / self.population_size
+        self.inertia_weight = (self.max_inertia - self.min_inertia) * success_percentage + self.min_inertia

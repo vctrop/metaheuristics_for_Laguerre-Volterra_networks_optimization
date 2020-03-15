@@ -25,7 +25,7 @@ from base_metaheuristic import Base
 import math
 
 class SA(Base):
-    """ Class for the Simulated Annealing optimizer as described in (Poli et al., 2007) with pertubation on continuous variable as in (Geng and Marmarelis, 2016) and using exponential decay cooling schedule (Nourani and Andresen, 1998) """    
+    """ Class for the Simulated Annealing optimizer (Kirkpatrick et al., 1983) with pertubation on continuous variable as in (Geng and Marmarelis, 2016) and using exponential decay cooling schedule (Nourani and Andresen, 1998) """    
     
     def __init__(self):
         """ Constructor """
