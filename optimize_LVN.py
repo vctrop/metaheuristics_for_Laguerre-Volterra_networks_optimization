@@ -29,6 +29,7 @@ import data_handling
 # Metaheuristics
 import ant_colony_for_continuous_domains
 import simulated_annealing
+import particle_swarm_optimization
 
 # Structural parameters  
 Fs = 25  
@@ -62,29 +63,38 @@ is_bounded.append(False)
     
 # Optimization
 # ACOr
+# Total # of function evaluations: archive_size + population_size * num_iterations
 print("ACOr")
-# ACOr total # of function evaluations: k + population_size * num_iterations
-ACOr_num_iterations = 20
+ACOr_num_iterations = 10
 ACOr = ant_colony_for_continuous_domains.ACOr()
-ACOr.set_verbosity(True)
+ACOr.set_verbosity(False)
 ACOr.set_cost(optimization_utilities.define_cost(L, H, Q, Fs, "geng_train.csv"))
 ACOr.set_parameters(ACOr_num_iterations, 5, 50, 0.01, 0.85)
 ACOr.define_variables(initial_ranges, is_bounded)
-ACOr.optimize()
-# ACOr_solution = ACOr.optimize()
-# print(ACOr_solution)
+print(ACOr.optimize())
 
 # SA
+# Total # of function evaluations: global_iter * local_iter + 1
 print("SA")
 SA_local_iterations = 10
-SA_global_iterations = 15 
+SA_global_iterations = 10 
 SA = simulated_annealing.SA()
-SA.set_verbosity(True)
+SA.set_verbosity(False)
 SA.set_cost(optimization_utilities.define_cost(L, H, Q, Fs, "geng_train.csv"))
 SA.set_parameters(SA_global_iterations, SA_local_iterations, 10.0, 0.99, 1e-2)
 SA.define_variables(initial_ranges, is_bounded)
-SA.optimize()
+print(SA.optimize())
 
+# PSO
+# Total # of function evaluations: population_size * (num_iterations + 1)
+print("PSO")
+PSO_iter =  9
+PSO = particle_swarm_optimization.PSO()
+PSO.set_verbosity(False)
+PSO.set_cost(optimization_utilities.define_cost(L, H, Q, Fs, "geng_train.csv"))
+PSO.set_parameters(PSO_iter, 10, 2,2)
+PSO.define_variables(initial_ranges, is_bounded)
+print(PSO.optimize())
 
 #system_parameters = optimization_utilities.decode_solution(solution, L, H, Q)
 #data_handling.write_LVN_file("acor_1k_geng", system_parameters)

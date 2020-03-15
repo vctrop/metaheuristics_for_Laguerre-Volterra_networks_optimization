@@ -1,11 +1,24 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Thu Sep  6 17:36:48 2018
+#!python3
 
-@author: Victor O. Costa
+# MIT License
+# Copyright (c) 2020 Victor O. Costa
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
 
-Implementation of the Ant Colony for Continuous Domains method from Socha, 2008.
-"""
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
     
 import numpy as np
 from scipy.stats import norm
@@ -94,12 +107,12 @@ class ACOr:
          
     def optimize(self):
         """ Initializes the archive and enter the main loop, until it reaches maximum number of iterations """
-        # Input error checking
+        # Error checking
         if self.num_variables == None:
-            print("Error, first set the number of variables and their boundaries")
+            print("Error, number of variables and their boundaries must be defined prior to optimization")
             exit(-1)
         if self.cost_function == None:
-            print("Error, first define the cost function to be used")
+            print("Error, cost function must be defined prior to optimization")
             exit(-1)
         
         # Initialize the archive by random sampling, respecting each variable's boundaries   
@@ -110,7 +123,7 @@ class ACOr:
         for i in range(self.k):
             for j in range(self.num_variables): 
                 self.SA[i, j] = np.random.uniform(self.initial_ranges[j][0], self.initial_ranges[j][1])        # Initialize solution archive randomly
-            self.SA[i, -1] = self.cost_function(self.SA[i, 0:self.num_variables], True)                            # Get initial cost for each solution
+            self.SA[i, -1] = self.cost_function(self.SA[i, 0:self.num_variables], -1)                            # Get initial cost for each solution
         self.SA = self.SA[self.SA[:, -1].argsort()]                                                    # Sort solution archive (best solutions first)
 
         x = np.linspace(1,self.k,self.k) 
@@ -150,7 +163,7 @@ class ACOr:
                             # pop[ant, var] = np.random.uniform(self.initial_ranges[var][0], self.initial_ranges[var][1])
                     
                     
-                pop[ant, -1] = self.cost_function(pop[ant, 0:self.num_variables], True)                                     # Evaluate cost of new solution
+                pop[ant, -1] = self.cost_function(pop[ant, 0:self.num_variables], -1)                                     # Evaluate cost of new solution
                 
             self.SA = np.append(self.SA, pop, axis = 0)                                                         # Append new solutions to the Archive
             self.SA = self.SA[self.SA[:, -1].argsort()]                                                         # Sort solution archive according to the fitness of each solution

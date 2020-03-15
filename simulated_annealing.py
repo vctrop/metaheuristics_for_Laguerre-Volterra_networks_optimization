@@ -108,7 +108,7 @@ class SA:
         for i in range(self.num_variables):
             self.current_solution[i] = np.random.uniform(self.initial_ranges[i][0], self.initial_ranges[i][1])
         # Compute its cost considering that weights were modified
-        self.current_solution[-1] = self.cost_function(self.current_solution, True)
+        self.current_solution[-1] = self.cost_function(self.current_solution, -1)
 
         if self.verbosity: print("[ALGORITHM MAIN LOOP]")
         # SA main loop
