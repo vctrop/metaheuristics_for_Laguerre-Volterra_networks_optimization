@@ -32,18 +32,19 @@ class SA:
         # Initial algorithm parameters
         self.num_global_iter = 0                        # Maximum number of global iterations
         self.num_local_iter = 0                         # Maximum number of local iterations
-        self.temperature = 100.0                          # Temperature, which determines acceptance probability of Metropolis sampling
+        self.temperature = 100.0                        # Temperature, which determines acceptance probability of Metropolis sampling
         self.cooling_constant = 0.99                    # Parameter for the exponential decay cooling schedule
         self.step_size = 1e-2                           # Technically each variable type has its own step size, but (Geng and Marmarelis, 2016) uses the same step for all variables
         
         # Initial (NULL) problem definition
-        self.num_variables = None                             # Number of variables
+        self.num_variables = None                       # Number of variables
         self.initial_ranges = []                        # Initialization boundaries for each variable
         self.is_bounded = []                            # Here, if a variable is constrained, it will be limited to its initialization boundaries for all the search
         self.cost_function = None                       # Cost function to guide the search
         
         # Optimization results
-        self.current_solution = None                    # Set of variables that define the current best solution, with its cost as the last element of the list
+        self.current_solution = None                    # Set of variables that define the current solution, with its cost as the last element of the list
+        self.best_solution = None                       # Best solution encountered in the search process    
         
         
     def set_verbosity(self, status):
@@ -109,6 +110,7 @@ class SA:
             self.current_solution[i] = np.random.uniform(self.initial_ranges[i][0], self.initial_ranges[i][1])
         # Compute its cost considering that weights were modified
         self.current_solution[-1] = self.cost_function(self.current_solution, -1)
+        self.best_solution = np.array(self.current_solution)
 
         if self.verbosity: print("[ALGORITHM MAIN LOOP]")
         # SA main loop
@@ -144,6 +146,8 @@ class SA:
                 delta_J = candidate_solution[-1] - self.current_solution[-1] 
                 if delta_J < 0:
                     acceptance_probability = 1.0
+                    if candidate_solution[-1] < best_solution[-1]:
+                        self.best_solution = np.array(candidate_solution)
                 else:
                     acceptance_probability = math.exp(-delta_J/self.temperature)
                 
@@ -154,4 +158,4 @@ class SA:
                     self.current_solution[chosen_variable] = candidate_solution[chosen_variable]
                     self.current_solution[-1] = candidate_solution[-1]
         
-        return self.current_solution
+        return self.best_solution
