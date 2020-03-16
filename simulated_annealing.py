@@ -25,7 +25,7 @@ from base_metaheuristic import Base
 import math
 
 class SA(Base):
-    """ Class for the Simulated Annealing optimizer (Kirkpatrick et al., 1983) with pertubation on continuous variable as in (Geng and Marmarelis, 2016) and using exponential decay cooling schedule (Nourani and Andresen, 1998) """    
+    """ Class for the Simulated Annealing optimizer (Kirkpatrick et al., 1983) with perturbation on continuous variable as in (Geng and Marmarelis, 2016) and using exponential decay cooling schedule (Nourani and Andresen, 1998) """    
     
     def __init__(self):
         """ Constructor """
@@ -40,12 +40,10 @@ class SA(Base):
         self.step_size = 1e-2                           # Technically each variable type has its own step size, but (Geng and Marmarelis, 2016) uses the same step for all variables
         
         # Optimization results
+        self.chosen_variable = None
         self.current_solution = None                    # Set of variables that define the current solution, with its cost as the last element of the list
         self.best_solution = None                       # Best solution of the archive
         
-        # Flag for modified SA
-        self.adaptive_generation = False                # Adaptive solution generation using crystalization factor from (Martins et al., 2012)
-        self.crystalization_factor = None
         
     def set_parameters(self, num_global_iter, num_local_iter, initial_temperature, cooling_constant, step_size):
         """ Define values for the parameters used by the algorithm """
@@ -79,10 +77,21 @@ class SA(Base):
         self.is_bounded = is_bounded
         self.current_solution = np.zeros(self.num_variables + 1)
         
-        if self.adaptive_generation == True:
-            print("ADAPTIVE GENERATION")
-            self.crystalization_factor = np.ones(self.num_variables)
       
+    def compute_perturbation(self):
+        """ For vanilla SA, the perturbation has fixed size for all variables """
+        # Random sign of perturbation
+        random_sign = (-1) ** np.random.randint(0,2)
+        perturbation = random_sign * self.step_size
+        
+        return perturbation
+        
+    # Feedback functions over Bates distribution standard deviation in ACF_SA
+    # No effect on vanilla SA
+    def positive_feedback(self):
+        pass
+    def negative_feedback(self):
+        pass
         
     def optimize(self):
         """ Generate a random initial solution and enter the algorithm loop until the number of global iterations is reached """
@@ -113,30 +122,23 @@ class SA(Base):
                     print(self.current_solution)
                 
                 ## Generate candidate solution and compute its cost
-                # Random sign of pertubation
-                random_sign = (-1) ** np.random.randint(0,2)
                 # Choose which variable will be pertubated
-                chosen_variable = np.random.randint(0, self.num_variables)      # [0, num_variables)
+                self.chosen_variable = np.random.randint(0, self.num_variables)      # [0, num_variables)
                 
-                # New solution generation may have a fixed step or follow an adaptive heuristic
-                if self.adaptive_generation == False:
-                    # Pertubate the chosen variable according to the random sign and step size
-                    pertubated_variable = self.current_solution[chosen_variable] + random_sign * self.step_size
-                else:
-                    # Pertubate the chosen variable using the Adaptive Crystalization Factor heuristic
-                    random_array = np.random.uniform(low = -0.5, high = 0.5, size = math.ceil(self.crystalization_factor[chosen_variable]))
-                    pertubated_variable = self.current_solution[chosen_variable] + (1 / self.crystalization_factor[chosen_variable]) * np.sum(random_array)
+                # Pertubate the chosen variable
+                perturbation = self.compute_perturbation()
+                pertubated_variable = self.current_solution[self.chosen_variable] + perturbation
                 
                 # For bounded variables, deal with search space violation using the hard border strategy
-                if self.is_bounded[chosen_variable]:
-                    if pertubated_variable < self.initial_ranges[chosen_variable][0]:
-                        pertubated_variable = self.initial_ranges[chosen_variable][0]
-                    elif pertubated_variable > self.initial_ranges[chosen_variable][1]:
-                        pertubated_variable = self.initial_ranges[chosen_variable][1]
+                if self.is_bounded[self.chosen_variable]:
+                    if pertubated_variable < self.initial_ranges[self.chosen_variable][0]:
+                        pertubated_variable = self.initial_ranges[self.chosen_variable][0]
+                    elif pertubated_variable > self.initial_ranges[self.chosen_variable][1]:
+                        pertubated_variable = self.initial_ranges[self.chosen_variable][1]
                 
                 candidate_solution = np.array(self.current_solution)
-                candidate_solution[chosen_variable] = pertubated_variable
-                candidate_solution[-1] = self.cost_function(candidate_solution, chosen_variable)
+                candidate_solution[self.chosen_variable] = pertubated_variable
+                candidate_solution[-1] = self.cost_function(candidate_solution, self.chosen_variable)
                 
                 # Decide if solution will replace the current one based on the Metropolis sampling algorithm
                 delta_J = candidate_solution[-1] - self.current_solution[-1] 
@@ -149,21 +151,20 @@ class SA(Base):
                 
                 # Candidate accepted
                 if np.random.rand() <= acceptance_probability:
-                    self.current_solution[chosen_variable] = candidate_solution[chosen_variable]
+                    self.current_solution[self.chosen_variable] = candidate_solution[self.chosen_variable]
                     self.current_solution[-1] = candidate_solution[-1]
                     
-                    # When using adaptive candidate generation
-                    if self.adaptive_generation == True:
-                        # Update crystalization_factor of the chosen variable using positive feedback strategy C
-                        self.crystalization_factor[chosen_variable] /= 4
+                    # Positive feedback over Bates distribution standard deviation in ACF_SA
+                    # Has no effect in vanilla SA
+                    self.positive_feedback()
+                
                 # Candidate rejected
                 else:
-                    # When using adaptive candidate generation
-                    if self.adaptive_generation == True:
-                        # Update crystalization_factor of the chosen variable using negative feedback
-                        self.crystalization_factor[chosen_variable] += 1
+                    # Negative feedback over Bates distribution standard deviation in ACF_SA
+                    # Has no effect in vanilla SA
+                    self.negative_feedback()
+                    
         
-        print(self.crystalization_factor)
         return self.best_solution
 
         
@@ -174,4 +175,45 @@ class ACF_SA(SA):
         """ Constructor """
         # Define verbosity and NULL problem definition
         super().__init__
-        self.adaptive_generation = True
+       
+        self.crystalization_factor = None       # Crystalization factors define the starndard deviation of the step size distribution for each variable at each itertion
+        
+
+    def set_parameters(self, num_global_iter, num_local_iter, initial_temperature, cooling_constant):
+        """ Define values for the parameters used by the algorithm """
+        # Input error checking
+        if num_global_iter <= 0 or num_local_iter <= 0:
+            print("Number of global and local iterations must be greater than zero")
+            exit(-1)
+            
+        self.num_global_iter = num_global_iter    
+        self.num_local_iter = num_local_iter     
+        self.temperature = initial_temperature      
+        self.cooling_constant = cooling_constant
+    
+    
+    def define_variables(self, initial_ranges, is_bounded):
+        """ Defines the number of variables, their initial values ranges and wether or not these ranges constrain the variable during the search.
+            Defines crystalization_factor dimensionality """
+        super().define_variables(initial_ranges, is_bounded)
+        self.crystalization_factor = np.ones(self.num_variables)
+        
+        
+    def compute_perturbation(self):
+        """ In ACF_SA, perturbation is generated by sampling from Bates distribution,
+            with standard deviation inversely proportional to the square root of the crystalization_factor for the given variable """
+            
+        random_array = np.random.uniform(low = -0.5, high = 0.5, size = math.ceil(self.crystalization_factor[self.chosen_variable]))
+        perturbation = (1 / self.crystalization_factor[self.chosen_variable]) * np.sum(random_array)
+        
+        return perturbation
+        
+        
+    def positive_feedback(self):
+        """ Increases standard deviation of Bates distribution in perturbation """
+        self.crystalization_factor[self.chosen_variable] /= 4
+        
+        
+    def negative_feedback(self):
+        """ Decreases standard deviation of Bates distribution in perturbation """
+        self.crystalization_factor[self.chosen_variable] += 1

@@ -36,13 +36,13 @@ class ACOr(Base):
         self.num_iter = 0                               # Number of iterations
         self.pop_size = 5                               # Population size
         self.k = 50                                     # Archive size
-        self.q = 0.1                                    # Locality of search
-        self.xi = 0.85                                  # Speed of convergence
+        self.q = 0.1                                    # Locality of search (selection of pivot ants)
+        self.xi = 0.85                                  # Speed of convergence (spreadness of ant generation)
         
         # Optimization results
         self.SA = None                                  # Solution Archive
         self.best_solution = None                       # Best solution of the archive
-
+        
 
     def set_parameters(self, num_iter, pop_size, k, q, xi):
         """ Define values for the parameters used by the algorithm """
@@ -85,6 +85,11 @@ class ACOr(Base):
             if r <= 0:
                 return i
          
+         
+    def update_xi(self):
+        """ Xi is not updated in vanilla ACOr """
+        pass
+    
          
     def optimize(self):
         """ Initializes the archive and enter the main loop, until it reaches maximum number of iterations """
@@ -145,10 +150,61 @@ class ACOr(Base):
                     
                     
                 pop[ant, -1] = self.cost_function(pop[ant, 0:self.num_variables], -1)                                     # Evaluate cost of new solution
-                
+            
             self.SA = np.append(self.SA, pop, axis = 0)                                                         # Append new solutions to the Archive
+            
+            # Xi update must be done after SA appended population, to take into account how many were accepted
+            # Has no effect in vanilla ACOr
+            self.update_xi()
+                
             self.SA = self.SA[self.SA[:, -1].argsort()]                                                         # Sort solution archive according to the fitness of each solution
             self.SA = self.SA[0:self.k, :]                                                                      # Remove worst solutions
-        
+            
+            
         self.best_solution = self.SA[0, :]
         return self.best_solution  
+        
+
+
+# Success rate-based adaptive ACOr
+class SRA_ACOr(ACOr):
+    """ Class to show that the idea of exploration/exploitation adaption based in the success rate of the swarm in AIWPS (Nickabadi et al., 2011)
+        can be applied to ACOr (and possibly many other swarm-based metaheuristics) """
+    
+    def __init__(self):
+        """ Constructor """
+        super().__init__()
+        
+        self.min_xi = None
+        self.max_xi = None
+    
+    def set_parameters(self, num_iter, pop_size, k, q, min_xi, max_xi):
+        """ Define values for the parameters used by the algorithm """
+        # Input error checking
+        if num_iter <= 0:
+            print("Number of iterations must be greater than zero")
+            exit(-1)
+        if min_xi > max_xi:
+            print("Max xi must be greater than min_xi")
+            exit(-1)
+            
+        self.num_iter = num_iter
+        self.pop_size = pop_size
+        self.k = k
+        self.q = q
+        self.min_xi = min_xi
+        self.max_xi = max_xi
+        self.xi = max_xi
+        
+    def update_xi(self):
+        """ Use population success rate to update Xi """
+        # Compute acceptance count
+        binary_reference = np.append(np.zeros(self.k), np.ones(self.pop_size))
+        binary_reference = binary_reference[self.SA[:, -1].argsort()]
+        acceptance_count = np.sum(binary_reference[0:self.k])
+        # Compute new Xi
+        success_percentage = acceptance_count / self.pop_size
+        self.xi = (self.max_xi - self.min_xi) * success_percentage + self.min_xi
+                
+        
+        

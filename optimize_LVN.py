@@ -64,37 +64,65 @@ is_bounded.append(False)
 # Optimization
 # ACOr
 # Total # of function evaluations: archive_size + population_size * num_iterations
-# print("ACOr")
-# ACOr_num_iterations = 10
-# ACOr = ant_colony_for_continuous_domains.ACOr()
-# ACOr.set_verbosity(False)
-# ACOr.set_cost(optimization_utilities.define_cost(L, H, Q, Fs, "geng_train.csv"))
-# ACOr.set_parameters(ACOr_num_iterations, 5, 50, 0.01, 0.85)
-# ACOr.define_variables(initial_ranges, is_bounded)
-# print(ACOr.optimize())
+print("ACOr")
+ACOr_num_iterations = 10
+ACOr = ant_colony_for_continuous_domains.ACOr()
+ACOr.set_verbosity(False)
+ACOr.set_cost(optimization_utilities.define_cost(L, H, Q, Fs, "geng_train.csv"))
+ACOr.set_parameters(ACOr_num_iterations, 5, 50, 0.01, 0.85)
+ACOr.define_variables(initial_ranges, is_bounded)
+print(ACOr.optimize())
+
+print("SRA_ACOr")
+SRA_ACOr_num_iterations = 10
+SRA_ACOr = ant_colony_for_continuous_domains.SRA_ACOr()
+SRA_ACOr.set_verbosity(False)
+SRA_ACOr.set_cost(optimization_utilities.define_cost(L, H, Q, Fs, "geng_train.csv"))
+SRA_ACOr.set_parameters(SRA_ACOr_num_iterations, 5, 50, 0.01, 0.01, 1)
+SRA_ACOr.define_variables(initial_ranges, is_bounded)
+print(SRA_ACOr.optimize())
 
 # SA
 # Total # of function evaluations: global_iter * local_iter + 1
-# print("SA")
-# SA_local_iterations = 10
-# SA_global_iterations = 100 
-# SA = simulated_annealing.ACF_SA()
-# SA.set_verbosity(False)
-# SA.set_cost(optimization_utilities.define_cost(L, H, Q, Fs, "geng_train.csv"))
-# SA.set_parameters(SA_global_iterations, SA_local_iterations, 10.0, 0.99, 1e-2)
-# SA.define_variables(initial_ranges, is_bounded)
-# print(SA.optimize())
+print("SA")
+SA_local_iterations = 10
+SA_global_iterations = 10 
+SA = simulated_annealing.SA()
+SA.set_verbosity(False)
+SA.set_cost(optimization_utilities.define_cost(L, H, Q, Fs, "geng_train.csv"))
+SA.set_parameters(SA_global_iterations, SA_local_iterations, 10.0, 0.99, 1e-2)
+SA.define_variables(initial_ranges, is_bounded)
+print(SA.optimize())
+
+print("ACF_SA")
+ACF_SA_local_iterations = 10
+ACF_SA_global_iterations = 10 
+ACF_SA = simulated_annealing.ACF_SA()
+ACF_SA.set_verbosity(False)
+ACF_SA.set_cost(optimization_utilities.define_cost(L, H, Q, Fs, "geng_train.csv"))
+ACF_SA.set_parameters(ACF_SA_global_iterations, ACF_SA_local_iterations, 10.0, 0.99)
+ACF_SA.define_variables(initial_ranges, is_bounded)
+print(ACF_SA.optimize())
 
 # PSO
 # Total # of function evaluations: population_size * num_iterations
 print("PSO")
 PSO_iter =  10
-PSO = particle_swarm_optimization.AIW_PSO()
+PSO = particle_swarm_optimization.PSO()
 PSO.set_verbosity(False)
 PSO.set_cost(optimization_utilities.define_cost(L, H, Q, Fs, "geng_train.csv"))
-PSO.set_parameters(PSO_iter, 10, 2,2,0,1)
+PSO.set_parameters(PSO_iter, 10, 2, 2)
 PSO.define_variables(initial_ranges, is_bounded)
 print(PSO.optimize())
+
+print("AIW_PSO")
+AIW_PSO_iter =  10
+AIW_PSO = particle_swarm_optimization.AIW_PSO()
+AIW_PSO.set_verbosity(False)
+AIW_PSO.set_cost(optimization_utilities.define_cost(L, H, Q, Fs, "geng_train.csv"))
+AIW_PSO.set_parameters(AIW_PSO_iter, 10, 2, 2, 0, 1)
+AIW_PSO.define_variables(initial_ranges, is_bounded)
+print(AIW_PSO.optimize())
 
 #system_parameters = optimization_utilities.decode_solution(solution, L, H, Q)
 #data_handling.write_LVN_file("acor_1k_geng", system_parameters)
