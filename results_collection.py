@@ -97,8 +97,7 @@ elif metaheuristic_name == "sa":
     # Parameters to be used for SA
     initial_temperature = 100.0;  cooling_constant = 0.99;  step_size = 1e-2;
     # Number of function evaluations for SA: global_iterations * local_iterations
-    #local_iterations = 500
-    local_iterations = 5
+    local_iterations = 500
     global_iterations = num_func_evals / local_iterations
     print("# local/global iterations = %d/%d" % (local_iterations, global_iterations)) 
     if not (global_iterations.is_integer()):
@@ -113,7 +112,6 @@ elif metaheuristic_name == "acfsa":
     initial_temperature = 100.0;  cooling_constant = 0.99
     # Number of function evaluations for ACFSA: global_iterations * local_iterations
     local_iterations = 500
-    #local_iterations = 5
     global_iterations = num_func_evals / local_iterations
     print("# local/global iterations = %d/%d" % (local_iterations, global_iterations)) 
     if not (global_iterations.is_integer()):
@@ -126,7 +124,6 @@ elif metaheuristic_name == "pso":
     print("PSO")
     # Parameters to be used for PSO
     swarm_size = 20;  personal_acceleration = 2;  global_acceleration = 2
-    #swarm_size = 10;  personal_acceleration = 2;  global_acceleration = 2
     # Number of function evaluations for PSO: swarm_size * num_iterations
     num_iterations = num_func_evals / swarm_size
     print("# iterations = %d" % num_iterations) 
@@ -140,7 +137,6 @@ else: # metaheuristic_name == "aiwpso"
     print("AIWPSO")
     # Parameters to be used for AIWPSO
     swarm_size = 20;  personal_acceleration = 2;  global_acceleration = 2; min_inertia = 0; max_inertia = 1
-    #swarm_size = 10;  personal_acceleration = 2;  global_acceleration = 2; min_inertia = 0; max_inertia = 1
     # Number of function evaluations for PSO: swarm_size * num_iterations
     num_iterations = num_func_evals / swarm_size
     if not (num_iterations.is_integer()):
@@ -188,8 +184,8 @@ found_solutions = []
 # For each found solution, compute cost function on test set
 test_input, test_output = data_handling.read_io(test_filename)
 test_costs = []
-#for i in range(30):
-for i in range(10):
+
+for i in range(30):
     # Search parameters on train set
     print("Round %d" % i)
     solution = metaheuristic.optimize()
