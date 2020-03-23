@@ -154,11 +154,15 @@ class PSO(Base):
                         elif self.swarm_positions[particle, var] > self.initial_ranges[var][1]:
                             self.swarm_positions[particle, var] = self.initial_ranges[var][1]        
                 
-                
+        print("Positions")
+        print(self.swarm_positions)
+        print("Velocities")
+        print(self.swarm_velocities)
+        
         return self.global_best
         
         
-class AIW_PSO(PSO):
+class AIWPSO(PSO):
     """ Class for the Adaptative Inertia Weight Particle Swarm Optimization (AIWPSO), following (Nickabadi et al., 2011) """
     def __init__(self):
         """ Constructor """

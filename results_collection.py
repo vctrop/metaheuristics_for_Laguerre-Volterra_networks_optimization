@@ -26,17 +26,17 @@ import pickle as pkl
 # Utilities
 import optimization_utilities
 import data_handling
+# LVN
+import laguerre_volterra_network_structure
 # Metaheuristics
 import ant_colony_for_continuous_domains
 import simulated_annealing
 import particle_swarm_optimization
 
-print(len(sys.argv))
-
 # Argument number checking
 if len(sys.argv) != 5:
-    print("Error, wrong number of arguments. Execute this script as follows:\npython %s {simulated system order} {hundreds of thousands of F.E.} {metaheuristic} {output filename}" % sys.argv[0])
-    print("The allowed values are: order = {\"finite\", \"infinite\"}, F.E. = {1, 2, 3, 4}, metaheuristic = {\"ACOr\", \"SA\", \"ACFSA\", \"PSO\", \"AIWPSO\"}")
+    print("Error, wrong number of arguments. Execute this script as follows:\npython %s {simulated system order} {# of function evaluations} {metaheuristic} {output base filename}" % sys.argv[0])
+    print("The allowed values are: order = {\"finite\", \"infinite\"}, 0 < F.E. < 100k, metaheuristic = {\"ACOr\", \"SA\", \"ACFSA\", \"PSO\", \"AIWPSO\"}")
     exit(-1)
     
 # Argument coherence checking
@@ -44,16 +44,17 @@ if sys.argv[1] != "finite" and sys.argv[1] != "infinite":
     print("Error, choose either \"finite\" or \"infinite\" for the simulated system order")
     exit(-1)
     
-if int(sys.argv[2]) < 1 or int(sys.argv[2]) > 4:
-    print("Error, minimum of objective function evaluations is 100k, while maximum is 400k")
-    exit(-1)
+# if (int(sys.argv[2]) % 500) != 0:
+    # print("Error, number of objective function evaluations must be a multiple of 500")
+    # exit(-1)
     
 metaheuristic_name = (sys.argv[3]).lower()
-if sys.argv[3] != "acor" and sys.argv[3] != "sa" and sys.argv[3] != "acfsa" and sys.argv[3] != "pso" and sys.argv[3] != "aiwpso":
+
+if metaheuristic_name != "acor" and metaheuristic_name != "sa" and metaheuristic_name != "acfsa" and metaheuristic_name != "pso" and metaheuristic_name != "aiwpso":
     print("Error, choose an available metaheuristic")
     exit(-1)
     
-output_filename = sys.argv[4]
+output_base_filename = sys.argv[4]
 
 # Filenames for train and test signals
 train_filename = None
@@ -73,69 +74,80 @@ else:
     exit(-1)
 
 # Number of objective function evaluations for this run    
-num_func_evals = int(sys.argv[3]) * 100000
+num_func_evals = int(sys.argv[2])
 
 # Instantiate metaheuristic
 # In the order of hundreds of thousands of objective function evaluations, the evaluations for initialization of ACOr and SA are insignificant and not considered in the counting    
 metaheuristic = None
 if metaheuristic_name == "acor":
+    print("ACOr")
     # Parameters used for ACOr
     k = 50;  pop_size = 5;  q = 0.01; xi = 0.85
-    # Number of function evaluations for ACOr: pop_size * num_iter
+    # Number of function evaluations for ACOr: pop_size * num_iterations
     num_iterations = num_func_evals / pop_size
-    print("Num iter = %d" % num_iterations) 
+    print("# iterations = %d" % num_iterations) 
     if not (num_iterations.is_integer()):
         print("Error, number of function evaluations is not divisible by population size")
         exit(-1)
     metaheuristic = ant_colony_for_continuous_domains.ACOr()
-    metaheuristic.set_parameters(num_iterations, pop_size, k, q, xi)
+    metaheuristic.set_parameters(int(num_iterations), pop_size, k, q, xi)
 
 elif metaheuristic_name == "sa":
+    print("SA")
     # Parameters to be used for SA
     initial_temperature = 100.0;  cooling_constant = 0.99;  step_size = 1e-2;
-    # Number of function evaluations for SA: global_iter * local_iter
-    local_iter = 500
-    global_iter = num_func_evals / local_iter
-    if not (global_iter.is_integer()):
+    # Number of function evaluations for SA: global_iterations * local_iterations
+    #local_iterations = 500
+    local_iterations = 5
+    global_iterations = num_func_evals / local_iterations
+    print("# local/global iterations = %d/%d" % (local_iterations, global_iterations)) 
+    if not (global_iterations.is_integer()):
         print("Error, number of function evaluations is not divisible by number of local iterations")
         exit(-1)
     metaheuristic = simulated_annealing.SA()
-    metaheuristic.set_parameters(global_iter, local_iter, initial_temperature, cooling_constant, step_size)
+    metaheuristic.set_parameters(int(global_iterations), int(local_iterations), initial_temperature, cooling_constant, step_size)
     
 elif metaheuristic_name == "acfsa":
+    print("ACFSA")
     # Parameters to be used for ACFSA
     initial_temperature = 100.0;  cooling_constant = 0.99
-    # Number of function evaluations for ACFSA: global_iter * local_iter
-    local_iter = 500
-    global_iter = num_func_evals / local_iter
-    if not (global_iter.is_integer()):
+    # Number of function evaluations for ACFSA: global_iterations * local_iterations
+    local_iterations = 500
+    #local_iterations = 5
+    global_iterations = num_func_evals / local_iterations
+    print("# local/global iterations = %d/%d" % (local_iterations, global_iterations)) 
+    if not (global_iterations.is_integer()):
         print("Error, number of function evaluations is not divisible by number of local iterations")
         exit(-1)
     metaheuristic = simulated_annealing.ACFSA()
-    metaheuristic.set_parameters(global_iter, local_iter, initial_temperature, cooling_constant)
+    metaheuristic.set_parameters(int(global_iterations), int(local_iterations), initial_temperature, cooling_constant)
     
 elif metaheuristic_name == "pso":
+    print("PSO")
     # Parameters to be used for PSO
     swarm_size = 20;  personal_acceleration = 2;  global_acceleration = 2
-    # Number of function evaluations for PSO: swarm_size * num_iter
-    num_iter = num_func_evals / swarm_size
-    if not (num_iter.is_integer()):
+    #swarm_size = 10;  personal_acceleration = 2;  global_acceleration = 2
+    # Number of function evaluations for PSO: swarm_size * num_iterations
+    num_iterations = num_func_evals / swarm_size
+    print("# iterations = %d" % num_iterations) 
+    if not (num_iterations.is_integer()):
         print("Error, number of function evaluations is not divisible by swarm size")
         exit(-1)
     metaheuristic = particle_swarm_optimization.PSO()
-    metaheuristic.set_parameters(num_iter, swarm_size, personal_acceleration, global_acceleration)
+    metaheuristic.set_parameters(int(num_iterations), swarm_size, personal_acceleration, global_acceleration)
     
 else: # metaheuristic_name == "aiwpso"
+    print("AIWPSO")
     # Parameters to be used for AIWPSO
     swarm_size = 20;  personal_acceleration = 2;  global_acceleration = 2; min_inertia = 0; max_inertia = 1
-    # Number of function evaluations for PSO: swarm_size * num_iter
-    num_iter = num_func_evals / swarm_size
-    if not (num_iter.is_integer()):
+    #swarm_size = 10;  personal_acceleration = 2;  global_acceleration = 2; min_inertia = 0; max_inertia = 1
+    # Number of function evaluations for PSO: swarm_size * num_iterations
+    num_iterations = num_func_evals / swarm_size
+    if not (num_iterations.is_integer()):
         print("Error, number of function evaluations is not divisible by swarm size")
         exit(-1)
     metaheuristic = particle_swarm_optimization.AIWPSO()
-    metaheuristic.set_parameters(num_iter, swarm_size, personal_acceleration, global_acceleration, min_inertia, max_inertia)
-    
+    metaheuristic.set_parameters(int(num_iterations), swarm_size, personal_acceleration, global_acceleration, min_inertia, max_inertia)
     
 # Cost function definition based on structural parameters and ground truth
 metaheuristic.set_cost(optimization_utilities.define_cost(L, H, Q, Fs, train_filename))
@@ -168,18 +180,28 @@ initial_ranges.append([offset_min, offset_max])
 is_bounded.append(False)
 
 metaheuristic.define_variables(initial_ranges, is_bounded)
+metaheuristic.set_verbosity(False)
 
 # Run the metaheuristic 30 times and save results for the best found solution of each run
 #  to a file with name defined in the last argument of the script
-metaheuristic.set_verbosity(False)
 found_solutions = []
-for i in range(30):
+# For each found solution, compute cost function on test set
+test_input, test_output = data_handling.read_io(test_filename)
+test_costs = []
+#for i in range(30):
+for i in range(10):
+    # Search parameters on train set
     print("Round %d" % i)
     solution = metaheuristic.optimize()
-    best_solutions.append(solution)
+    found_solutions.append(solution)
+    
+    # Decode solution and evaluate parameters on test set
+    alpha, W, C, offset = optimization_utilities.decode_solution(solution, L, H, Q)
+    LVN = laguerre_volterra_network_structure.LVN()
+    LVN.define_structure(L, H, Q, 1/Fs)
+    test_out_prediction = LVN.compute_output(test_input, alpha, W, C, offset, True)
+    test_nmse = optimization_utilities.NMSE(test_output, test_out_prediction, alpha)
+    test_costs.append(test_nmse) 
 
-
-
-# test_input, test_output = data_handling.read_io(test_filename)
-# test_prediction = 
-# test_NMSE = data_handling.NMSE(test_output, test_prediction, alpha)
+pkl.dump(found_solutions, open("./results/" + output_base_filename + "_solutions.pkl","wb"))
+pkl.dump(test_costs, open("./results/" + output_base_filename + "_test_costs.pkl","wb"))
