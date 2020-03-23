@@ -6,6 +6,11 @@ if len(sys.argv) != 2:
     exit(-1)
     
 file_basename = sys.argv[1]
+# Print computing times of each metaheuristic.optimization() call of each round
+with open("./results/" + file_basename + "_test_costs.pkl", "rb") as test_file:
+   test_costs = pkl.load(test_file)
+   print("OPTIMIZATION TIMES")
+   print(test_costs)
 # Print solutions found for each round
 with open("./results/" + file_basename + "_solutions.pkl", "rb") as solutions_file:
    found_solutions = pkl.load(solutions_file)

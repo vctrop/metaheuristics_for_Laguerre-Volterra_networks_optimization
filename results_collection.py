@@ -23,6 +23,7 @@
 # Python standard library
 import sys 
 import pickle as pkl
+import time
 # Utilities
 import optimization_utilities
 import data_handling
@@ -184,11 +185,17 @@ found_solutions = []
 # For each found solution, compute cost function on test set
 test_input, test_output = data_handling.read_io(test_filename)
 test_costs = []
-
+# Keep how much seconds each call to .optimize() spends
+optimization_times = []
 for i in range(30):
     # Search parameters on train set
     print("Round %d" % i)
+    time_start = time.perf_counter()
     solution = metaheuristic.optimize()
+    time_end = time.perf_counter()
+    # Keep time spent
+    optimization_times.append(time_end - time_start)
+    # Keep solution found
     found_solutions.append(solution)
     
     # Decode solution and evaluate parameters on test set
@@ -199,5 +206,6 @@ for i in range(30):
     test_nmse = optimization_utilities.NMSE(test_output, test_out_prediction, alpha)
     test_costs.append(test_nmse) 
 
-pkl.dump(found_solutions, open("./results/" + output_base_filename + "_solutions.pkl","wb"))
-pkl.dump(test_costs, open("./results/" + output_base_filename + "_test_costs.pkl","wb"))
+pkl.dump(optimization_times,    open("./results/" + output_base_filename + "_times.pkl", "wb"))    
+pkl.dump(found_solutions,       open("./results/" + output_base_filename + "_solutions.pkl","wb"))
+pkl.dump(test_costs,            open("./results/" + output_base_filename + "_test_costs.pkl","wb"))

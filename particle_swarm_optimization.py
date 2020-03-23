@@ -153,11 +153,6 @@ class PSO(Base):
                             self.swarm_positions[particle, var] = self.initial_ranges[var][0]
                         elif self.swarm_positions[particle, var] > self.initial_ranges[var][1]:
                             self.swarm_positions[particle, var] = self.initial_ranges[var][1]        
-                
-        print("Positions")
-        print(self.swarm_positions)
-        print("Velocities")
-        print(self.swarm_velocities)
         
         return self.global_best
         
