@@ -24,7 +24,7 @@ import data_handling
 
 ## Generate train and test data
 # Finite-order system
-train_system_parameters = data_handling.generate_io("lvn", 1024, "finite_ord_train", None)
-data_handling.generate_io("lvn", 4096, "finite_ord_test", train_system_parameters)
+train_system_parameters = data_handling.generate_io("lvn", 1024, "finite_order_train", None)
+data_handling.generate_io("lvn", 4096, "finite_order_test", train_system_parameters)
 
 data_handling.generate_io("geng", 1024, "geng_train", None)

@@ -34,8 +34,8 @@ class PSO(Base):
         # Initial algorithm parameters
         self.num_iter = 0                       # Total number of iterations
         self.population_size = 0                # Number of particles
-        self.personal_weight = 0.5              # Tendency towards personal bests
-        self.global_weight = 0.5                # Tendency towards global best
+        self.personal_acceleration = 0.5              # Tendency towards personal bests
+        self.global_acceleration = 0.5                # Tendency towards global best
         self.inertia_weight = 1.0               # Inertia weight constant at one is the same as no inertia weight
         
         # Optimization results
@@ -48,7 +48,7 @@ class PSO(Base):
         self.adaptive_inertia = False           # In vanilla PSO, there is no inertia weighting
         
         
-    def set_parameters(self, num_iter, population_size, personal_weight, global_weight):
+    def set_parameters(self, num_iter, population_size, personal_acceleration, global_acceleration):
         """ Define values for the parameters used by the algorithm """
         # Input error checking
         if num_iter <= 0:
@@ -57,14 +57,14 @@ class PSO(Base):
         if population_size <= 0:
             print("Population size must be greater than zero")
             exit(-1)
-        if personal_weight < 0 or global_weight < 0:
+        if personal_acceleration < 0 or global_acceleration < 0:
             print("Personal and global weights must be equal or greater than zero")
             exit(-1)
             
         self.num_iter = num_iter
         self.population_size = population_size
-        self.personal_weight = personal_weight
-        self.global_weight = global_weight
+        self.personal_acceleration = personal_acceleration
+        self.global_acceleration = global_acceleration
         
     
     def define_variables(self, initial_ranges, is_bounded):
@@ -140,8 +140,8 @@ class PSO(Base):
                 
                 # Update velocity vector
                 self.swarm_velocities[particle, :] =    self.inertia_weight * (self.swarm_velocities[particle, :]
-                                                        + self.personal_weight  * np.random.rand() * (self.personal_bests[particle, :-1]    - self.swarm_positions[particle, :-1])
-                                                        + self.global_weight    * np.random.rand() * (self.global_best[:-1]                 - self.swarm_positions[particle, :-1]))
+                                                        + self.personal_acceleration  * np.random.rand() * (self.personal_bests[particle, :-1]    - self.swarm_positions[particle, :-1])
+                                                        + self.global_acceleration    * np.random.rand() * (self.global_best[:-1]                 - self.swarm_positions[particle, :-1]))
                 # Update position vector
                 self.swarm_positions[particle, :-1] = self.swarm_positions[particle, :-1] + self.swarm_velocities[particle, :]
                 
@@ -168,12 +168,12 @@ class AIW_PSO(PSO):
         self.max_inertia = None
         self.min_inertia = None
     
-    def set_parameters(self, num_iter, population_size, personal_weight, global_weight, min_inertia, max_inertia):
+    def set_parameters(self, num_iter, population_size, personal_acceleration, global_acceleration, min_inertia, max_inertia):
         if min_inertia > max_inertia:
             print("Max intertia mut be greater than min inertia")
             exit(-1)
             
-        super().set_parameters(num_iter, population_size, personal_weight, global_weight)
+        super().set_parameters(num_iter, population_size, personal_acceleration, global_acceleration)
         self.min_inertia = min_inertia
         self.max_inertia = max_inertia
         
