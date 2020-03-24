@@ -59,25 +59,40 @@ def read_LVN_file(file_name):
         return alpha, W, C, offset
         
         
-# Generate IO data using a Gaussian White Noise (GWN) signal as input to enable the system to capture dynamics of frequency cross-terms
+# Generate IO data using a Gaussian White Noise (GWN) signal as input to enable the system to capture dynamics of frequency cross-terms, adding GWN to output to reach a certain SNR
 def generate_io(system_type, num_samples, file_name, deterministic_parameters):
-    input = np.random.standard_normal(size = num_samples)
+    # Zero mean and unit variance GWN signal
+    input = np.random.normal(0.0, 1.0, num_samples)
     
     if system_type == "lvn":
         L = 5; H = 3; Q = 4
         if deterministic_parameters == None:
-            output, deterministic_parameters = simulated_systems.simulate_LVN_random(input, L, H, Q)
+            noiseless_output, deterministic_parameters = simulated_systems.simulate_LVN_random(input, L, H, Q)
         else:
-            output = simulated_systems.simulate_LVN_deterministic(input, L, H, Q, deterministic_parameters)
+            noiseless_output = simulated_systems.simulate_LVN_deterministic(input, L, H, Q, deterministic_parameters)
             
         write_LVN_file(file_name, deterministic_parameters)
     elif system_type == "geng":
-        output, geng_parameters = simulated_systems.simulate_LVN_geng(input)
+        noiseless_output, geng_parameters = simulated_systems.simulate_LVN_geng(input)
         write_LVN_file(file_name, geng_parameters)
     else:
         #output = simulated_systems.simulate_trig_exp(input)
         exit(-1)
         
+    # Output additive Gaussian White Noise 
+    SNR_db = 5                                  # Signal-to-Noise ratio in decibels
+    out_avg_pwr = np.mean(np.array(noiseless_output) ** 2)          # Average power of output signal
+    out_avg_pwr_db = 10 * np.log10(out_avg_pwr)                           
+    # As SNR_db = sig_power_db - noise_power_db, noise_power_db = sig_power_db - SNR_db
+    noise_avg_pwr_db = out_avg_pwr_db - SNR_db
+    noise_avg_pwr = 10 ** (noise_avg_pwr_db / 10)
+    # For a GWN signal X, the average power is equal to the second moment E[X^2] = mean^2 + std^2. With zero mean, the average power is equal to std^2, the variance
+    GWN_std = np.sqrt(noise_avg_pwr)
+    noise = np.random.normal(0.0, GWN_std, num_samples)
+    
+    # Generate noisy output
+    output = noiseless_output + noise
+    
     csv_name = file_name + ".csv"
     with open(csv_name, mode = 'w', newline='') as file:
         csv_writer = csv.writer(file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
