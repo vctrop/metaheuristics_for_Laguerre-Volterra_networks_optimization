@@ -204,7 +204,7 @@ class ACFSA(SA):
             with standard deviation inversely proportional to the square root of the crystalization_factor for the given variable """
             
         random_array = np.random.uniform(low = -0.5, high = 0.5, size = math.ceil(self.crystalization_factor[self.chosen_variable]))
-        perturbation = (1 / self.crystalization_factor[self.chosen_variable]) * np.sum(random_array)
+        perturbation = np.sum(random_array) / self.crystalization_factor[self.chosen_variable]
         
         return perturbation
         
@@ -212,6 +212,8 @@ class ACFSA(SA):
     def positive_feedback(self):
         """ Increases standard deviation of Bates distribution in perturbation """
         self.crystalization_factor[self.chosen_variable] /= 4
+        if self.crystalization_factor[self.chosen_variable] == 0:
+            self.crystalization_factor[self.chosen_variable] = 1
         
         
     def negative_feedback(self):
