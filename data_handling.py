@@ -61,9 +61,13 @@ def read_LVN_file(file_name):
         
 # Generate IO data using a Gaussian White Noise (GWN) signal as input to enable the system to capture dynamics of frequency cross-terms, adding GWN to output to reach a certain SNR
 def generate_io(system_type, num_samples, file_name, deterministic_parameters):
-    # Zero mean and unit variance GWN signal
-    input = np.random.normal(0.0, 1.0, num_samples)
+
+    if system_type.lower() != "lvn" and system_type.lower() != "cascade":
+        print("The system type must be \"lvn\" or \"cascade\"")
+        exit(-1)
     
+    # Unit is a zero mean and unit variance Gaussian white noise (GWN) signal
+    input = np.random.normal(0.0, 1.0, num_samples)
     if system_type == "lvn":
         L = 5; H = 3; Q = 4
         if deterministic_parameters == None:
@@ -72,12 +76,11 @@ def generate_io(system_type, num_samples, file_name, deterministic_parameters):
             noiseless_output = simulated_systems.simulate_LVN_deterministic(input, L, H, Q, deterministic_parameters)
             
         write_LVN_file(file_name, deterministic_parameters)
-    elif system_type == "geng":
-        noiseless_output, geng_parameters = simulated_systems.simulate_LVN_geng(input)
-        write_LVN_file(file_name, geng_parameters)
     else:
-        #output = simulated_systems.simulate_trig_exp(input)
-        exit(-1)
+        if deterministic_parameters == None:
+            noiseless_output, alphas = simulated_systems.simulate_cascaded_random(input, 10)
+        else:
+            noiseless_output = simulated_systems.simulate_cascaded_deterministic(input, alphas)
         
     # Output additive Gaussian White Noise 
     SNR_db = 5                                  # Signal-to-Noise ratio in decibels

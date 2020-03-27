@@ -27,4 +27,6 @@ import data_handling
 train_system_parameters = data_handling.generate_io("lvn", 1024, "finite_order_train", None)
 data_handling.generate_io("lvn", 2048, "finite_order_test", train_system_parameters)
 
-#data_handling.generate_io("geng", 1024, "geng_train", None)
+# Infinite-order system
+train_alphas = data_handling.generate_io("cascade", 1024, "infinite_order_train", None)
+data_handling.generate_io("cascade", 1024, "infinite_order_test", train_alphas)

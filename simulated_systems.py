@@ -20,14 +20,18 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+# Python standard library
+import math
+# Third party
 import numpy as np
+# LVN
 from laguerre_volterra_network_structure import LVN
 
 # Sampling frequency fixed at 25 Hz
 Fs = 25
 
-# Simulate Laguerre-Volterra Network of arbitrary structure with randomized parameters
-def simulate_LVN_random(input_data, L, H, Q):
+# Simulate Laguerre-Volterra Network of arbitrary structure with randomized parameters, and return both output signal and the parameters used (to use the same set of parameters in the test set)
+def simulate_LVN_random(input_signal, L, H, Q):
     # Continuous parameters
     alpha = np.random.uniform(0, 0.5)  
     W = [list(np.random.random(L) * 2 - 1) for _ in range(H)]
@@ -37,12 +41,13 @@ def simulate_LVN_random(input_data, L, H, Q):
     
     system = LVN()
     system.define_structure(L, H, Q, 1/Fs)
-    output_data = system.compute_output(input_data, alpha, W, C, offset, False)
+    output_signal = system.compute_output(input_signal, alpha, W, C, offset, False)
     
-    return output_data, system_parameters
+    return output_signal, system_parameters
     
-    
-def simulate_LVN_deterministic(input_data, L, H, Q, parameters):
+
+# Simulate LVN of arbitrary structure with deterministic parameters, and return output signal
+def simulate_LVN_deterministic(input_signal, L, H, Q, parameters):
     alpha = parameters[0]
     W = parameters[1]
     C = parameters[2]
@@ -50,23 +55,54 @@ def simulate_LVN_deterministic(input_data, L, H, Q, parameters):
     
     system = LVN()
     system.define_structure(L, H, Q, 1/Fs)
-    output_data = system.compute_output(input_data, alpha, W, C, offset, False)
+    output_signal = system.compute_output(input_signal, alpha, W, C, offset, False)
     
-    return output_data
+    return output_signal
 
-
-def simulate_LVN_geng(input_data):
-    alpha = 0.1
-    W = [[1, 0, 1, 1], [-1, 1, 2, 0.5]]
-    C = [[1, -1], [1, 0.5]]
-    offset = 0.0
+# Simulated infinite order (in Taylor and Volterra senses) system via a cascade of IIR filter and static exponential 
+# Sum of exponentially weighted moving averages (EWMAs) as IIR  
+def simulate_cascaded_random(input_signal, num_ewmas):
     
-    parameters = [alpha, W, C , offset]
+    # randomize alphas
+    alphas = np.random.uniform(1e-5, 1, num_ewmas)
+    #
+    ewmas = [0 for _ in range(num_ewmas)]
+    ewmas_inspect = [[0 for _ in range(num_ewmas)] for _ in range(len(input_signal))]
+    #
+    output_signal = []
+    for data_i in range(len(input_signal)):
+        # 
+        ewmas_sum = 0
+        for ewma_i in range(num_ewmas):
+            ewmas[ewma_i] = (1 - alphas[ewma_i]) * input_signal[data_i] + alphas[ewma_i] * ewmas[ewma_i]
+            ewmas_sum += ewmas[ewma_i]
+            ewmas_inspect[data_i][ewma_i] = ewmas[ewma_i]
+        
+        y = math.exp(ewmas_sum)
+        output_signal.append(y)
     
-    L = len(W[0])
-    H = len(W)
-    Q = len(C[0])
+    print(np.array(ewmas_inspect))
     
-    output = simulate_LVN_deterministic(input_data, L, H, Q, parameters)
+    return output_signal, alphas
     
-    return output, parameters
+    
+def simulate_cascaded_deterministic(input_signal, alphas):
+    num_ewmas = len(alphas)
+    #
+    ewmas = [0 for _ in range(num_ewmas)]
+    ewmas_inspect = [[0 for _ in range(num_ewmas)] for _ in range(len(input_signal))]
+    #
+    output_signal = []
+    for data_i in range(len(input_signal)):
+        # 
+        ewmas_sum = 0
+        for ewma_i in range(num_ewmas):
+            ewmas[ewma_i] = (1 - alphas[ewma_i]) * input_signal[data_i] + alphas[ewma_i] * ewmas[ewma_i]
+            ewmas_sum += ewmas[ewma_i]
+            ewmas_inspect[data_i][ewma_i] = ewmas[ewma_i]
+        
+        y = math.exp(ewmas_sum)
+        output_signal.append(y)
+    
+    return output_signal
+    
