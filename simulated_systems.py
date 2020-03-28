@@ -67,7 +67,6 @@ def simulate_cascaded_random(input_signal, num_ewmas):
     alphas = np.random.uniform(1e-5, 1, num_ewmas)
     #
     ewmas = [0 for _ in range(num_ewmas)]
-    ewmas_inspect = [[0 for _ in range(num_ewmas)] for _ in range(len(input_signal))]
     #
     output_signal = []
     for data_i in range(len(input_signal)):
@@ -76,16 +75,14 @@ def simulate_cascaded_random(input_signal, num_ewmas):
         for ewma_i in range(num_ewmas):
             ewmas[ewma_i] = (1 - alphas[ewma_i]) * input_signal[data_i] + alphas[ewma_i] * ewmas[ewma_i]
             ewmas_sum += ewmas[ewma_i]
-            ewmas_inspect[data_i][ewma_i] = ewmas[ewma_i]
         
-        y = math.exp(ewmas_sum)
+        y = math.exp(ewmas_sum) * math.sin(ewmas_sum)
         output_signal.append(y)
     
-    print(np.array(ewmas_inspect))
     
     return output_signal, alphas
     
-    
+#
 def simulate_cascaded_deterministic(input_signal, alphas):
     num_ewmas = len(alphas)
     #
@@ -101,7 +98,7 @@ def simulate_cascaded_deterministic(input_signal, alphas):
             ewmas_sum += ewmas[ewma_i]
             ewmas_inspect[data_i][ewma_i] = ewmas[ewma_i]
         
-        y = math.exp(ewmas_sum)
+        y = math.exp(ewmas_sum) * math.sin(ewmas_sum)
         output_signal.append(y)
     
     return output_signal
