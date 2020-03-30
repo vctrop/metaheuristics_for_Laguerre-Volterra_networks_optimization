@@ -79,14 +79,13 @@ else:
 num_func_evals = int(sys.argv[2])
 
 # Instantiate metaheuristic
-# In the order of hundreds of thousands of objective function evaluations, the evaluations for initialization of ACOr and SA are insignificant and not considered in the counting    
 metaheuristic = None
 if metaheuristic_name == "acor":
     print("ACOr")
     # Parameters used for ACOr
     k = 50;  pop_size = 10;  q = 0.01; xi = 0.85
     # Number of function evaluations for ACOr: pop_size * num_iterations
-    num_iterations = num_func_evals / pop_size
+    num_iterations = (num_func_evals - k) / pop_size
     print("# iterations = %d" % num_iterations) 
     if not (num_iterations.is_integer()):
         print("Error, number of function evaluations is not divisible by population size")
