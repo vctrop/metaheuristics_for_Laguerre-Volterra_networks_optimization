@@ -191,9 +191,9 @@ optimization_times = []
 for i in range(30):
     # Search parameters on train set
     print("Round %d" % i)
-    time_start = time.time()
+    time_start = time.process_time()
     solution = metaheuristic.optimize()
-    time_end = time.time()
+    time_end = time.process_time()
     # Keep time spent
     optimization_times.append(time_end - time_start)
     # Keep solution found
