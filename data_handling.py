@@ -78,7 +78,7 @@ def generate_io(system_type, num_samples, file_name, deterministic_parameters):
         write_LVN_file(file_name, deterministic_parameters)
     else:
         if deterministic_parameters == None:
-            noiseless_output, alphas = simulated_systems.simulate_cascaded_random(input, 10)
+            noiseless_output, alphas = simulated_systems.simulate_cascaded_random(input, 3)
         else:
             noiseless_output = simulated_systems.simulate_cascaded_deterministic(input, alphas)
         

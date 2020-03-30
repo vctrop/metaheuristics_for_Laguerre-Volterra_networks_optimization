@@ -69,10 +69,11 @@ L = None;   H = None;    Q = None;
 if sys.argv[1] == "finite":
     train_filename = "finite_order_train.csv"
     test_filename = "finite_order_test.csv"
-    L = 5;  H = 3;  Q = 4; 
+    L = 5;  H = 3;  Q = 4
 else:
-    # Inifinite order system not defined yet
-    exit(-1)
+    train_filename = "infinite_order_train.csv"
+    test_filename = "infinite_order_test.csv"
+    L = 2;  H = 4;  Q = 5
 
 # Number of objective function evaluations for this run    
 num_func_evals = int(sys.argv[2])
@@ -83,7 +84,7 @@ metaheuristic = None
 if metaheuristic_name == "acor":
     print("ACOr")
     # Parameters used for ACOr
-    k = 50;  pop_size = 5;  q = 0.01; xi = 0.85
+    k = 50;  pop_size = 10;  q = 0.01; xi = 0.85
     # Number of function evaluations for ACOr: pop_size * num_iterations
     num_iterations = num_func_evals / pop_size
     print("# iterations = %d" % num_iterations) 
@@ -190,9 +191,9 @@ optimization_times = []
 for i in range(30):
     # Search parameters on train set
     print("Round %d" % i)
-    time_start = time.process_time()
+    time_start = time.time()
     solution = metaheuristic.optimize()
-    time_end = time.process_time()
+    time_end = time.time()
     # Keep time spent
     optimization_times.append(time_end - time_start)
     # Keep solution found

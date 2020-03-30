@@ -64,7 +64,7 @@ def simulate_LVN_deterministic(input_signal, L, H, Q, parameters):
 def simulate_cascaded_random(input_signal, num_ewmas):
     
     # randomize alphas
-    alphas = np.random.uniform(1e-5, 1, num_ewmas)
+    alphas = np.random.uniform(0.2, 0.8, num_ewmas)
     #
     ewmas = [0 for _ in range(num_ewmas)]
     #
@@ -76,7 +76,7 @@ def simulate_cascaded_random(input_signal, num_ewmas):
             ewmas[ewma_i] = (1 - alphas[ewma_i]) * input_signal[data_i] + alphas[ewma_i] * ewmas[ewma_i]
             ewmas_sum += ewmas[ewma_i]
         
-        y = math.exp(ewmas_sum) * math.sin(ewmas_sum)
+        y = math.exp(math.sin(ewmas_sum))
         output_signal.append(y)
     
     
@@ -98,7 +98,7 @@ def simulate_cascaded_deterministic(input_signal, alphas):
             ewmas_sum += ewmas[ewma_i]
             ewmas_inspect[data_i][ewma_i] = ewmas[ewma_i]
         
-        y = math.exp(ewmas_sum) * math.sin(ewmas_sum)
+        y = math.exp(math.sin(ewmas_sum))
         output_signal.append(y)
     
     return output_signal

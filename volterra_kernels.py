@@ -103,7 +103,7 @@ fig = plt.figure()
 ax = fig.gca(projection='3d')
 x = y = np.arange(0, memory, 1)
 X, Y = np.meshgrid(x, y)
-ax.plot_surface(X, Y, kernel_2, cmap='viridis', linewidth=0, antialiased=False)
+ax.plot_surface(X, Y, kernel_2, cmap='viridis', linewidth=0, antialiased=False, alpha=0.5)
 
 # Customize the z axis.
 ax.set_zlim(-1.01, 1.01)
