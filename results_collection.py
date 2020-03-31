@@ -22,8 +22,10 @@
 
 # Python standard library
 import sys 
-import pickle as pkl
 import time
+# Third party 
+import numpy as np
+
 # Utilities
 import optimization_utilities
 import data_handling
@@ -51,7 +53,7 @@ if sys.argv[1] != "finite" and sys.argv[1] != "infinite":
     
 metaheuristic_name = (sys.argv[3]).lower()
 
-if metaheuristic_name != "acor" and metaheuristic_name != "sa" and metaheuristic_name != "acfsa" and metaheuristic_name != "pso" and metaheuristic_name != "aiwpso":
+if metaheuristic_name != "acor" and metaheuristic_name != "sa" and metaheuristic_name != "pso": # and metaheuristic_name != "aiwpso" and metaheuristic_name != "acfsa":
     print("Error, choose an available metaheuristic")
     exit(-1)
     
@@ -88,7 +90,7 @@ if metaheuristic_name == "acor":
     num_iterations = (num_func_evals - k) / pop_size
     print("# iterations = %d" % num_iterations) 
     if not (num_iterations.is_integer()):
-        print("Error, number of function evaluations is not divisible by population size")
+        print("Error, number of function evaluations subtracted by k is not divisible by population size")
         exit(-1)
     metaheuristic = ant_colony_for_continuous_domains.ACOr()
     metaheuristic.set_parameters(int(num_iterations), pop_size, k, q, xi)
@@ -107,21 +109,21 @@ elif metaheuristic_name == "sa":
     metaheuristic = simulated_annealing.SA()
     metaheuristic.set_parameters(int(global_iterations), int(local_iterations), initial_temperature, cooling_constant, step_size)
     
-elif metaheuristic_name == "acfsa":
-    print("ACFSA")
-    # Parameters to be used for ACFSA
-    initial_temperature = 100.0;  cooling_constant = 0.99
-    # Number of function evaluations for ACFSA: global_iterations * local_iterations
-    local_iterations = 500
-    global_iterations = num_func_evals / local_iterations
-    print("# local/global iterations = %d/%d" % (local_iterations, global_iterations)) 
-    if not (global_iterations.is_integer()):
-        print("Error, number of function evaluations is not divisible by number of local iterations")
-        exit(-1)
-    metaheuristic = simulated_annealing.ACFSA()
-    metaheuristic.set_parameters(int(global_iterations), int(local_iterations), initial_temperature, cooling_constant)
+# elif metaheuristic_name == "acfsa":
+    # print("ACFSA")
+    # # Parameters to be used for ACFSA
+    # initial_temperature = 100.0;  cooling_constant = 0.99
+    # # Number of function evaluations for ACFSA: global_iterations * local_iterations
+    # local_iterations = 500
+    # global_iterations = num_func_evals / local_iterations
+    # print("# local/global iterations = %d/%d" % (local_iterations, global_iterations)) 
+    # if not (global_iterations.is_integer()):
+        # print("Error, number of function evaluations is not divisible by number of local iterations")
+        # exit(-1)
+    # metaheuristic = simulated_annealing.ACFSA()
+    # metaheuristic.set_parameters(int(global_iterations), int(local_iterations), initial_temperature, cooling_constant)
     
-elif metaheuristic_name == "pso":
+else: # metaheuristic_name == "pso":
     print("PSO")
     # Parameters to be used for PSO
     swarm_size = 20;  personal_acceleration = 2;  global_acceleration = 2
@@ -134,17 +136,17 @@ elif metaheuristic_name == "pso":
     metaheuristic = particle_swarm_optimization.PSO()
     metaheuristic.set_parameters(int(num_iterations), swarm_size, personal_acceleration, global_acceleration)
     
-else: # metaheuristic_name == "aiwpso"
-    print("AIWPSO")
-    # Parameters to be used for AIWPSO
-    swarm_size = 20;  personal_acceleration = 2;  global_acceleration = 2; min_inertia = 0; max_inertia = 1
-    # Number of function evaluations for PSO: swarm_size * num_iterations
-    num_iterations = num_func_evals / swarm_size
-    if not (num_iterations.is_integer()):
-        print("Error, number of function evaluations is not divisible by swarm size")
-        exit(-1)
-    metaheuristic = particle_swarm_optimization.AIWPSO()
-    metaheuristic.set_parameters(int(num_iterations), swarm_size, personal_acceleration, global_acceleration, min_inertia, max_inertia)
+# else: # metaheuristic_name == "aiwpso"
+    # print("AIWPSO")
+    # # Parameters to be used for AIWPSO
+    # swarm_size = 20;  personal_acceleration = 2;  global_acceleration = 2; min_inertia = 0; max_inertia = 1
+    # # Number of function evaluations for PSO: swarm_size * num_iterations
+    # num_iterations = num_func_evals / swarm_size
+    # if not (num_iterations.is_integer()):
+        # print("Error, number of function evaluations is not divisible by swarm size")
+        # exit(-1)
+    # metaheuristic = particle_swarm_optimization.AIWPSO()
+    # metaheuristic.set_parameters(int(num_iterations), swarm_size, personal_acceleration, global_acceleration, min_inertia, max_inertia)
     
 # Cost function definition based on structural parameters and ground truth
 metaheuristic.set_cost(optimization_utilities.define_cost(L, H, Q, Fs, train_filename))
@@ -196,8 +198,7 @@ for i in range(30):
     # Keep time spent
     optimization_times.append(time_end - time_start)
     # Keep solution found
-    found_solutions.append(solution)
-    
+    found_solutions.append(list(solution))
     # Decode solution and evaluate parameters on test set
     alpha, W, C, offset = optimization_utilities.decode_solution(solution, L, H, Q)
     LVN = laguerre_volterra_network_structure.LVN()
@@ -206,6 +207,6 @@ for i in range(30):
     test_nmse = optimization_utilities.NMSE(test_output, test_out_prediction, alpha)
     test_costs.append(test_nmse) 
 
-pkl.dump(optimization_times,    open("./results/" + output_base_filename + "_times.pkl", "wb"))    
-pkl.dump(found_solutions,       open("./results/" + output_base_filename + "_solutions.pkl","wb"))
-pkl.dump(test_costs,            open("./results/" + output_base_filename + "_test_costs.pkl","wb"))
+np.save("./results/" + output_base_filename + "_times.npy"     , optimization_times)    
+np.save("./results/" + output_base_filename + "_solutions.npy" , found_solutions)
+np.save("./results/" + output_base_filename + "_test_costs.npy", test_costs)

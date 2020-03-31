@@ -21,25 +21,25 @@
 # SOFTWARE.
 
 import sys
-import pickle as pkl
+import numpy as np
 
 if len(sys.argv) != 2:
     print("Error, please enter the base filename of the desired results")
     exit(-1)
     
 file_basename = sys.argv[1]
+
+# Load data
+test_costs      = np.load("./results/" + file_basename + "_times.npy")
+found_solutions = np.load("./results/" + file_basename + "_solutions.npy")
+test_costs      = np.load("./results/" + file_basename + "_test_costs.npy")
+
 # Print computing times of each metaheuristic.optimization() call of each round
-with open("./results/" + file_basename + "_times.pkl", "rb") as test_file:
-   test_costs = pkl.load(test_file)
-   print("OPTIMIZATION TIMES")
-   print(test_costs)
+print("OPTIMIZATION TIMES")
+print(test_costs)
 # Print solutions found for each round
-with open("./results/" + file_basename + "_solutions.pkl", "rb") as solutions_file:
-   found_solutions = pkl.load(solutions_file)
-   print("FOUND SOLUTIONS")
-   print(found_solutions)
+print("FOUND SOLUTIONS")
+print(found_solutions)
 # Print NMSE on test data for the solutions of each round
-with open("./results/" + file_basename + "_test_costs.pkl", "rb") as test_file:
-   test_costs = pkl.load(test_file)
-   print("TEST COSTS")
-   print(test_costs)
+print("TEST COSTS")
+print(test_costs)
