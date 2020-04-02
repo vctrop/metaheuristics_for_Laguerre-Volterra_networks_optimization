@@ -30,13 +30,13 @@ if len(sys.argv) != 2:
 file_basename = sys.argv[1]
 
 # Load data
-test_costs      = np.load("./results/" + file_basename + "_times.npy")
+train_times      = np.load("./results/" + file_basename + "_times.npy")
 found_solutions = np.load("./results/" + file_basename + "_solutions.npy")
 test_costs      = np.load("./results/" + file_basename + "_test_costs.npy")
 
 # Print computing times of each metaheuristic.optimization() call of each round
 print("OPTIMIZATION TIMES")
-print(test_costs)
+print(train_times)
 # Print solutions found for each round
 print("FOUND SOLUTIONS")
 print(found_solutions)
