@@ -36,7 +36,7 @@ class PSO(Base):
         self.population_size = 0                # Number of particles
         self.personal_acceleration = 0.5              # Tendency towards personal bests
         self.global_acceleration = 0.5                # Tendency towards global best
-        self.inertia_weight = 1.0               # Inertia weight constant at one is the same as no inertia weight
+        self.inertia_weight = 0.99               # Inertia weight constant at one is the same as no inertia weight
         
         # Optimization results
         self.swarm_positions = None             # Current solutions of the swarm
@@ -156,6 +156,7 @@ class PSO(Base):
         
         return self.global_best
         
+
         
 class AIWPSO(PSO):
     """ Class for the Adaptative Inertia Weight Particle Swarm Optimization (AIWPSO), following (Nickabadi et al., 2011) """
