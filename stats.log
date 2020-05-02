@@ -1,0 +1,129 @@
+finite
+sa
+1k
+Train time: 166.8 (0.756604)
+Train cost: 13.055 (13.0599)
+Test cost : 13.2408 (13.1965)
+5k
+Train time: 835.456 (2.98022)
+Train cost: 8.97393 (10.7655)
+Test cost : 9.09457 (10.9277)
+10k
+Train time: 1666.46 (6.29415)
+Train cost: 3.83161 (7.05195)
+Test cost : 3.89862 (7.19458)
+50k
+Train time: 8201.71 (17.3904)
+Train cost: 0.274309 (0.0603448)
+Test cost : 0.285807 (0.0541147)
+100k
+Train time: 16682.4 (28.707)
+Train cost: 0.265055 (0.0671283)
+Test cost : 0.277716 (0.061992)
+pso
+1k
+Train time: 166.448 (0.199782)
+Train cost: 0.279349 (0.0144523)
+Test cost : 0.27815 (0.0166328)
+5k
+Train time: 863.731 (1.87274)
+Train cost: 0.302685 (0.00763695)
+Test cost : 0.313974 (0.013544)
+10k
+Train time: 1686.92 (2.8123)
+Train cost: 0.268273 (0.0119982)
+Test cost : 0.270714 (0.0114994)
+50k
+Train time: 8292.84 (21.9133)
+Train cost: 0.269223 (0.0214555)
+Test cost : 0.265742 (0.0167676)
+100k
+Train time: 17564.7 (69.8598)
+Train cost: 0.276071 (0.0238909)
+Test cost : 0.284759 (0.0241773)
+acor
+1k
+Train time: 171.236 (0.303933)
+Train cost: 0.247386 (0.0212328)
+Test cost : 0.256289 (0.0270076)
+5k
+Train time: 856.34 (3.70496)
+Train cost: 0.239932 (0.0195442)
+Test cost : 0.257155 (0.0266919)
+10k
+Train time: 1713.49 (6.60091)
+Train cost: 0.235745 (0.0158312)
+Test cost : 0.253289 (0.0210604)
+50k
+Train time: 8503.42 (24.6568)
+Train cost: 0.240211 (0.020895)
+Test cost : 0.26228 (0.0314855)
+100k
+Train time: 17203.6 (26.9549)
+Train cost: 0.243619 (0.0241193)
+Test cost : 0.266685 (0.032964)
+
+infinite
+sa
+1k
+Train time: 248.936 (0.520204)
+Train cost: 1.03375 (0.48668)
+Test cost : 1.03695 (0.508925)
+5k
+Train time: 1232.07 (2.2688)
+Train cost: 0.974996 (0.373233)
+Test cost : 0.977332 (0.384621)
+10k
+Train time: 2480.51 (4.73496)
+Train cost: 0.91217 (0.457601)
+Test cost : 0.910798 (0.471339)
+50k
+Train time: 12138.9 (42.355)
+Train cost: 0.48112 (0.380534)
+Test cost : 0.51514 (0.369613)
+100k
+Train time: 24165.5 (79.903)
+Train cost: 0.396263 (0.267553)
+Test cost : 0.44518 (0.254221)
+pso
+1k
+Train time: 243.815 (0.463794)
+Train cost: 0.384439 (0.0334128)
+Test cost : 0.370001 (0.0345647)
+5k
+Train time: 1243.33 (2.34119)
+Train cost: 0.410072 (0.0322426)
+Test cost : 0.394226 (0.0450613)
+10k
+Train time: 2443.92 (7.19985)
+Train cost: 0.401149 (0.0266462)
+Test cost : 0.383501 (0.0209547)
+50k
+Train time: 12186.5 (53.3178)
+Train cost: 0.434362 (0.00189639)
+Test cost : 0.392085 (0.0142502)
+100k
+Train time: 25198.1 (161.424)
+Train cost: 0.42331 (0.0130178)
+Test cost : 0.395728 (0.0100366)
+acor
+1k
+Train time: 247.834 (1.11904)
+Train cost: 0.316669 (0.0369266)
+Test cost : 0.379765 (0.0239949)
+5k
+Train time: 1257.69 (7.51337)
+Train cost: 0.294807 (0.000620727)
+Test cost : 0.385429 (0.00589715)
+10k
+Train time: 2519.21 (10.1553)
+Train cost: 0.296515 (0.00839645)
+Test cost : 0.383221 (0.0103793)
+50k
+Train time: 12291.8 (57.9809)
+Train cost: 0.30441 (0.0252318)
+Test cost : 0.380406 (0.019131)
+100k
+Train time: 24881.6 (92.381)
+Train cost: 0.299778 (0.0205484)
+Test cost : 0.382067 (0.0118838)
