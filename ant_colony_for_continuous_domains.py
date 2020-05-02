@@ -20,8 +20,10 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
     
+# 3rth party
 import numpy as np
 from scipy.stats import norm
+# Mine
 from base_metaheuristic import Base
 
 class ACOr(Base):
@@ -84,13 +86,26 @@ class ACOr(Base):
             r -= f
             if r <= 0:
                 return i
-         
-         
+    
+
+    def update_success_rate(self):
+        """ Xi is not updated in vanilla ACOr """
+        pass
+    
     def update_xi(self):
         """ Xi is not updated in vanilla ACOr """
         pass
     
-         
+    def update_q(self):
+        """ q is not updated in vanilla ACOr """
+        pass
+    
+    
+    def handle_adaptions(self):
+        self.update_success_rate()
+        self.update_q()
+        self.update_xi()
+    
     def optimize(self):
         """ Initializes the archive and enter the main loop, until it reaches maximum number of iterations """
         # Error checking
@@ -151,60 +166,163 @@ class ACOr(Base):
                     
                 pop[ant, -1] = self.cost_function(pop[ant, 0:self.num_variables], -1)                                     # Evaluate cost of new solution
             
-            self.SA = np.append(self.SA, pop, axis = 0)                                                         # Append new solutions to the Archive
+            # Append new solutions to the Archive
+            self.SA = np.append(self.SA, pop, axis = 0)                                                         
             
-            # Xi update must be done after SA appended population, to take into account how many were accepted
-            # Has no effect in vanilla ACOr
-            self.update_xi()
-                
-            self.SA = self.SA[self.SA[:, -1].argsort()]                                                         # Sort solution archive according to the fitness of each solution
-            self.SA = self.SA[0:self.k, :]                                                                      # Remove worst solutions
+            # Compute success rate, updates xi and q. MUST be done after SA appended population, to take into account how many were accepted
+            # Does nothing in vanilla ACOr
+            self.handle_adaptions()
             
+            # Sort solution archive according to the fitness of each solution
+            self.SA = self.SA[self.SA[:, -1].argsort()]                                                         
+            # Remove worst solutions
+            self.SA = self.SA[0:self.k, :]                                                                      
             
         self.best_solution = self.SA[0, :]
         return self.best_solution  
         
+## The following classes show that the idea of exploration/exploitation adaption based in the success rate of the swarm in AIWPS (Nickabadi et al., 2011)
+##   can be applied to ACOr (and possibly many other swarm-based metaheuristics).
 
+# Success rate adaptive ACOr 
+class SRAACOr(ACOr):
+    """ This is the parent class of all adaptive versions of ACOr presented here. It contains  """
+    
+    def __init__(self):
+        """ Constructor """
+        super().__init__()
+        self.success_rate = None
+        
+    def update_success_rate(self):
+        """ Returns the success rate of the swarm at a given iteration. 
+            MUST be applied imediately after the concatenation of m new solutions to the swarm """
+        binary_reference = np.append(np.zeros(self.k), np.ones(self.pop_size))
+        binary_reference = binary_reference[self.SA[:, -1].argsort()]
+        acceptance_count = np.sum(binary_reference[0:self.k])
+        self.success_rate = acceptance_count / self.pop_size
+       
+    
+# Adaptive center selector ACOr
+class ACSACOr(SRA_ACOr):
+    """ Adaptive control of the q parameter """
+    def __init__(self):
+        """ Constructor """
+        super().__init__()
+        
+        #
+        self.min_q = None
+        self.max_q = None
+    
+    def set_parameters(self, num_iter, pop_size, k, xi, min_q, max_q):
+        """ Define values for the parameters used by the algorithm """
+        # Input error checking
+        if min_q > max_q:
+            print("Max q must be greater than min q")
+            exit(-1)
+        
+        # Parameter setting from ACOr class
+        super().super().set_parameters(num_iter, pop_size, k, max_q, xi)    
 
-# Success rate-based adaptive ACOr
-class SRA_ACOr(ACOr):
-    """ Class to show that the idea of exploration/exploitation adaption based in the success rate of the swarm in AIWPS (Nickabadi et al., 2011)
-        can be applied to ACOr (and possibly many other swarm-based metaheuristics) """
+        # Minimum and maximum of adaptive q
+        self.min_q = min_q
+        self.max_q = max_q
+    
+    def update_q(self):
+        """ Use population success rate to update Xi """
+        if self.success_rate == None:
+            print("Error, first compute success rate")
+            exit(-1)
+        
+        # Compute new q (currently only in a linear way)
+        self.q = (self.max_q - self.min_q) * self.success_rate + self.min_q
+       
+    
+# Adaptive generation spreadness ACOr
+class AGSACOr(SRA_ACOr):
+    """ Adaptive control of the xi parameter """
     
     def __init__(self):
         """ Constructor """
         super().__init__()
         
+        #
         self.min_xi = None
         self.max_xi = None
     
     def set_parameters(self, num_iter, pop_size, k, q, min_xi, max_xi):
         """ Define values for the parameters used by the algorithm """
         # Input error checking
-        if num_iter <= 0:
-            print("Number of iterations must be greater than zero")
-            exit(-1)
         if min_xi > max_xi:
-            print("Max xi must be greater than min_xi")
+            print("Max xi must be greater than min xi")
             exit(-1)
             
-        self.num_iter = num_iter
-        self.pop_size = pop_size
-        self.k = k
-        self.q = q
+        # Parameter setting from ACOr class
+        super().super().set_parameters(num_iter, pop_size, k, q, max_xi)    
+
+        # Minimum and maximum of adaptive xi
         self.min_xi = min_xi
         self.max_xi = max_xi
-        self.xi = max_xi
-        
+    
     def update_xi(self):
         """ Use population success rate to update Xi """
-        # Compute acceptance count
-        binary_reference = np.append(np.zeros(self.k), np.ones(self.pop_size))
-        binary_reference = binary_reference[self.SA[:, -1].argsort()]
-        acceptance_count = np.sum(binary_reference[0:self.k])
-        # Compute new Xi
-        success_percentage = acceptance_count / self.pop_size
-        self.xi = (self.max_xi - self.min_xi) * success_percentage + self.min_xi
-                
+        if self.success_rate == None:
+            print("Error, first compute success rate")
+            exit(-1)
+        
+        # Compute acceptance count and success rate
+        self.update_success_rate()
+        # Compute new Xi (currently only in a linear way)
+        self.xi = (self.max_xi - self.min_xi) * self.success_rate + self.min_xi
+        
+    
+# Multi-adaptive ACOr
+class MAACOr(SRA_ACOr):
+    """ Adaptive control of the both q and xi parameters """
+    
+        def __init__(self):
+        """ Constructor """
+        super().__init__()
+        #
+        self.min_xi = None
+        self.max_xi = None
+        #
+        self.min_q = None
+        self.max_q = None
+    
+    def set_parameters(self, num_iter, pop_size, k, min_q, max_q, min_xi, max_xi):
+        """ Define values for the parameters used by the algorithm """
+        # Input error checking
+        if min_xi > max_xi or min_q > max_q:
+            print("Max of xi and q must be greater than min.")
+            exit(-1)
+            
+        # Parameter setting from ACOr class
+        super().super().set_parameters(num_iter, pop_size, k, max_q, max_xi)    
+
+        # Minimum and maximum of adaptive xi
+        self.min_xi = min_xi
+        self.max_xi = max_xi
+        
+        # Minimum and maximum of adaptive q
+        self.min_xi = min_q
+        self.max_xi = max_q
+    
+    def update_xi(self):
+        """ Use population success rate to update Xi """
+        if self.success_rate == None:
+            print("Error, first compute success rate")
+            exit(-1)
+        
+        # Compute new Xi (currently only in a linear way)
+        self.xi = (self.max_xi - self.min_xi) * self.success_rate + self.min_xi
+        
+    def update_q(self):
+        """ Use population success rate to update Xi """
+        if self.success_rate == None:
+            print("Error, first compute success rate")
+            exit(-1)
+        
+        # Compute new q (currently only in a linear way)
+        self.q = (self.max_q - self.min_q) * self.success_rate + self.min_q    
         
         
