@@ -53,6 +53,6 @@ for system_order in ["finite", "infinite"]:
             train_costs_std = np.std(train_costs, ddof=1)
             test_costs_std  = np.std(test_costs , ddof=1)
             
-            print("Train time: %g (%g)" % (train_times_avg, train_times_std))
-            print("Train cost: %g (%g)" % (train_costs_avg, train_costs_std))
-            print("Test cost : %g (%g)" % (test_costs_avg , test_costs_std))
+            print("Train time: %.3f (%.3f)" % (train_times_avg, train_times_std))
+            print("Train cost: %.3f (%.3f)" % (train_costs_avg, train_costs_std))
+            print("Test cost : %.3f (%.3f)" % (test_costs_avg , test_costs_std))
