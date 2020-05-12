@@ -26,6 +26,7 @@ from matplotlib.ticker import FuncFormatter
 
 x = np.arange(3)
 x_ticks = ("SA", "PSO", "ACO" + r"$_\mathbb{R}$")
+y_ticks = [3600 * i for i in range(7)]
 finite_times = [16682.398, 17564.746, 17203.593]
 infinite_times = [24165.497, 25198.063, 24881.647]
 
@@ -33,15 +34,23 @@ def hours(x, pos):
     'The two args are the value and tick position'
     hours = int(x / 3600)
     minutes = int((x % 3600) / 60)
-    return '%d:%d h' % (hours, minutes)
-
+    #return '%d:%d h' % (hours, minutes)
+    return '0%d h' % hours
+    
 formatter = FuncFormatter(hours)
 
 fig, ax = plt.subplots()
 ax.yaxis.set_major_formatter(formatter)
+plt.hlines(finite_times, xmin=-0.175, xmax=1.975, color='#003366', linestyle='dashed')
+plt.hlines(infinite_times, xmin=0.025, xmax=2.175, color='#339933', linestyle='dashed')
 plt.bar(x-0.1, finite_times  , width=0.15, color='#003366', align='center', label = "Finite order")
 plt.bar(x+0.1, infinite_times, width=0.15, color='#339933', align='center', label = "Infinite order")
-plt.legend(loc="upper left", bbox_to_anchor=(0.7,1))
+plt.legend(loc="upper left", bbox_to_anchor=(0.65,0.88), fontsize = 16)
+plt.ylabel('Average optimization times', fontsize=18)
 plt.xticks(x, x_ticks)
+plt.yticks(y_ticks)
+ax.tick_params(axis='both', which='major', labelsize=20)
+ax.tick_params(axis='both', which='minor', labelsize=20)
+
 
 plt.show()
