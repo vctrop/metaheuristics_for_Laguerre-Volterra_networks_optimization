@@ -64,73 +64,44 @@ initial_ranges.append([offset_min, offset_max])
 is_bounded.append(False)
     
 # Optimization
+function_evals = [100.00]
+
 # ACOr
 # Total # of function evaluations: archive_size + population_size * num_iterations
-# print("ACOr")
-# ACOr_num_iterations = 10
-# ACOr = ant_colony_for_continuous_domains.ACOr()
-# ACOr.set_verbosity(False)
-# ACOr.set_cost(optimization_utilities.define_cost(L, H, Q, Fs, "infinite_order_train.csv"))
-# ACOr.set_parameters(ACOr_num_iterations, 5, 50, 0.01, 0.85)
-# ACOr.define_variables(initial_ranges, is_bounded)
-# best_solution = ACOr.optimize()
-# print(best_solution)
-
-# print("SRA_ACOr")
-# SRA_ACOr_num_iterations = 10
-# SRA_ACOr = ant_colony_for_continuous_domains.SRA_ACOr()
-# SRA_ACOr.set_verbosity(False)
-# SRA_ACOr.set_cost(optimization_utilities.define_cost(L, H, Q, Fs, "infinite_order_train.csv"))
-# SRA_ACOr.set_parameters(SRA_ACOr_num_iterations, 5, 50, 0.01, 0.01, 1)
-# SRA_ACOr.define_variables(initial_ranges, is_bounded)
-# best_solution = SRA_ACOr.optimize()
-# print(best_solution)
+print("ACOr")
+m = 5; k = 50; q = 0.01; xi = 0.85
+ACOr = ant_colony_for_continuous_domains.ACOr()
+ACOr.set_verbosity(False)
+ACOr.set_cost(optimization_utilities.define_cost(L, H, Q, Fs, "./signals_and_systems/infinite_order_train.csv"))
+ACOr.set_parameters(m, k, q, xi, function_evals)
+ACOr.define_variables(initial_ranges, is_bounded)
+best_solution = ACOr.optimize()
+print(best_solution)
 
 # SA
 # Total # of function evaluations: global_iter * local_iter + 1
-# print("SA")
-# SA_local_iterations = 10
-# SA_global_iterations = 100 
-# SA = simulated_annealing.SA()
-# SA.set_verbosity(False)
-# SA.set_cost(optimization_utilities.define_cost(L, H, Q, Fs, "infinite_order_train.csv"))
-# SA.set_parameters(SA_global_iterations, SA_local_iterations, 100.0, 0.99, 1e-2)
-# SA.define_variables(initial_ranges, is_bounded)
-# best_solution = SA.optimize()
-# print(best_solution)
-
-# print("ACFSA")
-# ACF_SA_local_iterations = 10
-# ACF_SA_global_iterations = 100 
-# ACFSA = simulated_annealing.ACFSA()
-# ACFSA.set_verbosity(False)
-# ACFSA.set_cost(optimization_utilities.define_cost(L, H, Q, Fs, "infinite_order_train.csv"))
-# ACFSA.set_parameters(ACF_SA_global_iterations, ACF_SA_local_iterations, 10.0, 0.99)
-# ACFSA.define_variables(initial_ranges, is_bounded)
-# best_solution = ACFSA.optimize()
-# print(best_solution)
+print("SA")
+SA_local_iterations = 50
+T0 = 100.0; decay_constant = 0.99; step_size = 1e-2
+SA = simulated_annealing.SA()
+SA.set_verbosity(False)
+SA.set_cost(optimization_utilities.define_cost(L, H, Q, Fs, "./signals_and_systems/infinite_order_train.csv"))
+SA.set_parameters(T0, decay_constant, step_size,SA_local_iterations,function_evals)
+SA.define_variables(initial_ranges, is_bounded)
+best_solution = SA.optimize()
+print(best_solution)
 
 # PSO
 # Total # of function evaluations: population_size * num_iterations
 print("PSO")
-PSO_iter =  150
+swarm_size = 20; accel_p = 2; accel_g = 2
 PSO = particle_swarm_optimization.PSO()
 PSO.set_verbosity(False)
-PSO.set_cost(optimization_utilities.define_cost(L, H, Q, Fs, "infinite_order_train.csv"))
-PSO.set_parameters(PSO_iter, 20, 2, 2)
+PSO.set_cost(optimization_utilities.define_cost(L, H, Q, Fs, "./signals_and_systems/infinite_order_train.csv"))
+PSO.set_parameters(swarm_size, accel_p, accel_g, function_evals)
 PSO.define_variables(initial_ranges, is_bounded)
 best_solution = PSO.optimize()
 print(best_solution)
-
-# print("AIWPSO")
-# AIW_PSO_iter =  10
-# AIWPSO = particle_swarm_optimization.AIWPSO()
-# AIWPSO.set_verbosity(False)
-# AIWPSO.set_cost(optimization_utilities.define_cost(L, H, Q, Fs, "infinite_order_train.csv"))
-# AIWPSO.set_parameters(AIW_PSO_iter, 10, 2, 2, 0, 1)
-# AIWPSO.define_variables(initial_ranges, is_bounded)
-# best_solution = AIWPSO.optimize()
-# print(best_solution)
 
 # system_parameters = optimization_utilities.decode_solution(best_solution, L, H, Q)
 # data_handling.write_LVN_file("pso_infinite", system_parameters)

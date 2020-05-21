@@ -1,24 +1,19 @@
 #!python3
 
-# MIT License
-# Copyright (c) 2020 Victor O. Costa
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
+# Copyright (C) 2020  Victor O. Costa
 
-# The above copyright notice and this permission notice shall be included in all
-# copies or substantial portions of the Software.
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
 
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 # Python standard library
 import sys 
@@ -37,27 +32,22 @@ import simulated_annealing
 import particle_swarm_optimization
 
 # Argument number checking
-if len(sys.argv) != 5:
-    print("Error, wrong number of arguments. Execute this script as follows:\npython %s {simulated system order} {# of function evaluations} {metaheuristic} {output base filename}" % sys.argv[0])
-    print("The allowed values are: order = {\"finite\", \"infinite\"}, 0 < F.E. < 100k, metaheuristic = {\"ACOr\", \"SA\", \"ACFSA\", \"PSO\", \"AIWPSO\"}")
+if len(sys.argv) != 3:
+    print("Error, wrong number of arguments. Execute this script as follows:\npython3 %s {simulated system order} {metaheuristic}" % sys.argv[0])
+    print("The allowed values are: order = {\"finite\", \"infinite\"},  metaheuristic = {\"ACOr\", \"SA\", \"PSO\"}")
     exit(-1)
     
 # Argument coherence checking
-if sys.argv[1] != "finite" and sys.argv[1] != "infinite":
+order_str = sys.argv[1] 
+if order_str != "finite" and order_str != "infinite":
     print("Error, choose either \"finite\" or \"infinite\" for the simulated system order")
     exit(-1)
     
-# if (int(sys.argv[2]) % 500) != 0:
-    # print("Error, number of objective function evaluations must be a multiple of 500")
-    # exit(-1)
-    
-metaheuristic_name = (sys.argv[3]).lower()
+metaheuristic_name = (sys.argv[2]).lower()
 
-if metaheuristic_name != "acor" and metaheuristic_name != "sa" and metaheuristic_name != "pso": # and metaheuristic_name != "aiwpso" and metaheuristic_name != "acfsa":
+if metaheuristic_name != "acor" and metaheuristic_name != "sa" and metaheuristic_name != "pso":
     print("Error, choose an available metaheuristic")
     exit(-1)
-    
-output_base_filename = sys.argv[4]
 
 # Filenames for train and test signals
 train_filename = None
@@ -68,17 +58,15 @@ Fs = 25                             # Sampling frequency is assumed to be 25 Hz,
 L = None;   H = None;    Q = None;    
 
 # Whether the simulated system has finite or infinite order determines the structure of the optimized LVN and from which file the data will be loaded
-if sys.argv[1] == "finite":
-    train_filename = "finite_order_train.csv"
-    test_filename = "finite_order_test.csv"
+train_filename = './signals_and_systems/' + order_str + '_order_train.csv'
+test_filename  = './signals_and_systems/' + order_str + '_order_test.csv'
+if order_str == "finite":
     L = 5;  H = 3;  Q = 4
 else:
-    train_filename = "infinite_order_train.csv"
-    test_filename = "infinite_order_test.csv"
     L = 2;  H = 4;  Q = 5
 
-# Number of objective function evaluations for this run    
-num_func_evals = int(sys.argv[2])
+# Number of objective function evaluations of interest
+function_evals = [1e3, 5e3, 1e4, 5e4, 1e5]
 
 # Instantiate metaheuristic
 metaheuristic = None
@@ -86,67 +74,23 @@ if metaheuristic_name == "acor":
     print("ACOr")
     # Parameters used for ACOr
     k = 50;  pop_size = 10;  q = 0.01; xi = 0.85
-    # Number of function evaluations for ACOr: pop_size * num_iterations
-    num_iterations = (num_func_evals - k) / pop_size
-    print("# iterations = %d" % num_iterations) 
-    if not (num_iterations.is_integer()):
-        print("Error, number of function evaluations subtracted by k is not divisible by population size")
-        exit(-1)
     metaheuristic = ant_colony_for_continuous_domains.ACOr()
-    metaheuristic.set_parameters(int(num_iterations), pop_size, k, q, xi)
+    metaheuristic.set_parameters(pop_size, k, q, xi, function_evals)
 
 elif metaheuristic_name == "sa":
     print("SA")
     # Parameters to be used for SA
-    initial_temperature = 100.0;  cooling_constant = 0.99;  step_size = 1e-2;
-    # Number of function evaluations for SA: global_iterations * local_iterations
+    initial_temperature = 10.0;  cooling_constant = 0.99;  step_size = 1e-2;
     local_iterations = 500
-    global_iterations = num_func_evals / local_iterations
-    print("# local/global iterations = %d/%d" % (local_iterations, global_iterations)) 
-    if not (global_iterations.is_integer()):
-        print("Error, number of function evaluations is not divisible by number of local iterations")
-        exit(-1)
     metaheuristic = simulated_annealing.SA()
-    metaheuristic.set_parameters(int(global_iterations), int(local_iterations), initial_temperature, cooling_constant, step_size)
-    
-# elif metaheuristic_name == "acfsa":
-    # print("ACFSA")
-    # # Parameters to be used for ACFSA
-    # initial_temperature = 100.0;  cooling_constant = 0.99
-    # # Number of function evaluations for ACFSA: global_iterations * local_iterations
-    # local_iterations = 500
-    # global_iterations = num_func_evals / local_iterations
-    # print("# local/global iterations = %d/%d" % (local_iterations, global_iterations)) 
-    # if not (global_iterations.is_integer()):
-        # print("Error, number of function evaluations is not divisible by number of local iterations")
-        # exit(-1)
-    # metaheuristic = simulated_annealing.ACFSA()
-    # metaheuristic.set_parameters(int(global_iterations), int(local_iterations), initial_temperature, cooling_constant)
-    
+    metaheuristic.set_parameters(initial_temperature, cooling_constant, step_size, local_iterations, function_evals)
+
 else: # metaheuristic_name == "pso":
     print("PSO")
     # Parameters to be used for PSO
     swarm_size = 20;  personal_acceleration = 2;  global_acceleration = 2
-    # Number of function evaluations for PSO: swarm_size * num_iterations
-    num_iterations = num_func_evals / swarm_size
-    print("# iterations = %d" % num_iterations) 
-    if not (num_iterations.is_integer()):
-        print("Error, number of function evaluations is not divisible by swarm size")
-        exit(-1)
     metaheuristic = particle_swarm_optimization.PSO()
-    metaheuristic.set_parameters(int(num_iterations), swarm_size, personal_acceleration, global_acceleration)
-    
-# else: # metaheuristic_name == "aiwpso"
-    # print("AIWPSO")
-    # # Parameters to be used for AIWPSO
-    # swarm_size = 20;  personal_acceleration = 2;  global_acceleration = 2; min_inertia = 0; max_inertia = 1
-    # # Number of function evaluations for PSO: swarm_size * num_iterations
-    # num_iterations = num_func_evals / swarm_size
-    # if not (num_iterations.is_integer()):
-        # print("Error, number of function evaluations is not divisible by swarm size")
-        # exit(-1)
-    # metaheuristic = particle_swarm_optimization.AIWPSO()
-    # metaheuristic.set_parameters(int(num_iterations), swarm_size, personal_acceleration, global_acceleration, min_inertia, max_inertia)
+    metaheuristic.set_parameters(swarm_size, personal_acceleration, global_acceleration, function_evals)
     
 # Cost function definition based on structural parameters and ground truth
 metaheuristic.set_cost(optimization_utilities.define_cost(L, H, Q, Fs, train_filename))
@@ -182,31 +126,35 @@ metaheuristic.define_variables(initial_ranges, is_bounded)
 metaheuristic.set_verbosity(False)
 
 # Run the metaheuristic 30 times and save results for the best found solution of each run
-#  to a file with name defined in the last argument of the script
-found_solutions = []
 # For each found solution, compute cost function on test set
 test_input, test_output = data_handling.read_io(test_filename)
+train_costs = []
 test_costs = []
+LVN = laguerre_volterra_network_structure.LVN()
+LVN.define_structure(L, H, Q, 1/Fs)
 # Keep how much seconds each call to .optimize() spends
 optimization_times = []
+
 for i in range(30):
     # Search parameters on train set
     print("Round %d" % i)
     time_start = time.process_time()
-    solution = metaheuristic.optimize()
+    solutions_at_FEs = metaheuristic.optimize()
     time_end = time.process_time()
     # Keep time spent
     optimization_times.append(time_end - time_start)
     # Keep solution found
-    found_solutions.append(list(solution))
+    train_costs.append(solutions_at_FEs[:, -1])
     # Decode solution and evaluate parameters on test set
-    alpha, W, C, offset = optimization_utilities.decode_solution(solution, L, H, Q)
-    LVN = laguerre_volterra_network_structure.LVN()
-    LVN.define_structure(L, H, Q, 1/Fs)
-    test_out_prediction = LVN.compute_output(test_input, alpha, W, C, offset, True)
-    test_nmse = optimization_utilities.NMSE(test_output, test_out_prediction, alpha)
-    test_costs.append(test_nmse) 
+    run_test_NMSEs = []
+    for solution in solutions_at_FEs:
+        alpha, W, C, offset = optimization_utilities.decode_solution(solution, L, H, Q)
+        test_out_prediction = LVN.compute_output(test_input, alpha, W, C, offset, True)
+        test_nmse = optimization_utilities.NMSE(test_output, test_out_prediction, alpha)
+        run_test_NMSEs.append(test_nmse) 
+    test_costs.append(run_test_NMSEs)
 
-np.save("./results/" + output_base_filename + "_times.npy"     , optimization_times)    
-np.save("./results/" + output_base_filename + "_solutions.npy" , found_solutions)
-np.save("./results/" + output_base_filename + "_test_costs.npy", test_costs)
+output_base_filename = metaheuristic_name + '_' + order_str
+np.save('./results/' + output_base_filename + '_times.npy'      , optimization_times)    
+np.save('./results/' + output_base_filename + '_train_costs.npy', train_costs)
+np.save('./results/' + output_base_filename + '_test_costs.npy' , test_costs)

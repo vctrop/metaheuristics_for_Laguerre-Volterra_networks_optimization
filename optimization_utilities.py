@@ -58,6 +58,7 @@ def decode_solution(candidate_solution, L, H, Q):
     
     return alpha, W, C, offset
     
+    
 # Compute cost of candidate solution, which is encoded as a flat array: alpha, W(0,0) ... W(L-1,H-1), C(0,0) ... C(Q-1,H-1), offset
 def define_cost(L, H, Q, Fs, train_filename):
     # Cost computation parameterized by the nesting function (define_cost)

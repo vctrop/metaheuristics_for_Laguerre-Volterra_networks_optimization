@@ -15,7 +15,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
     
+# 3rd party
 import numpy as np
+# Own
 from base_metaheuristic import Base
     
 class PSO(Base):
@@ -27,10 +29,11 @@ class PSO(Base):
         super().__init__
         
         # Initial algorithm parameters
+        self.relative_iterations = None         # Array containing the iterations at which best solutions are reported
         self.num_iter = 0                       # Total number of iterations
         self.population_size = 0                # Number of particles
-        self.personal_acceleration = 0.5              # Tendency towards personal bests
-        self.global_acceleration = 0.5                # Tendency towards global best
+        self.personal_acceleration = 0.5        # Tendency towards personal bests
+        self.global_acceleration = 0.5          # Tendency towards global best
         self.inertia_weight = 0.99               # Inertia weight constant at one is the same as no inertia weight
         
         # Optimization results
@@ -43,20 +46,28 @@ class PSO(Base):
         self.adaptive_inertia = False           # In vanilla PSO, there is no inertia weighting
         
         
-    def set_parameters(self, num_iter, population_size, personal_acceleration, global_acceleration):
+    def set_parameters(self, population_size, personal_acceleration, global_acceleration, function_evaluations_array):
         """ Define values for the parameters used by the algorithm """
         # Input error checking
-        if num_iter <= 0:
-            print("Number of iterations must be greater than zero")
-            exit(-1)
         if population_size <= 0:
             print("Population size must be greater than zero")
             exit(-1)
         if personal_acceleration < 0 or global_acceleration < 0:
             print("Personal and global weights must be equal or greater than zero")
             exit(-1)
+        if len(function_evaluations_array) == 0:
+            print("Error, objective function evaluation array must not be empty")
+            exit(-1)
             
-        self.num_iter = num_iter
+        # Number of function evaluations for PSO: population_size * num_iterations 
+        function_evaluations_array = np.array(function_evaluations_array)
+        self.relative_iterations = function_evaluations_array / population_size
+        all_divisible = (np.array([x.is_integer() for x in self.relative_iterations])).all()
+        if not all_divisible:
+            print("Error, at least one number of function evaluations is not divisible by population size")
+            exit(-1)
+        
+        self.num_iter = int(np.max(self.relative_iterations))
         self.population_size = population_size
         self.personal_acceleration = personal_acceleration
         self.global_acceleration = global_acceleration
@@ -88,10 +99,6 @@ class PSO(Base):
         self.global_best = np.zeros(self.num_variables + 1)
         self.global_best[-1] = float('inf')
             
-
-    def update_inertia_weight(self, acceptance_count):
-        """ Inertia weight is not updated in vanilla PSO. It is kept at 1.0, the same of determining no inertia weight """
-        pass
             
             
     def optimize(self):
@@ -109,12 +116,13 @@ class PSO(Base):
             for j in range(self.num_variables):
                 self.swarm_positions[i, j] = np.random.uniform(self.initial_ranges[j][0], self.initial_ranges[j][1])
                 self.swarm_velocities[i, j] = np.random.uniform(self.initial_ranges[j][0], self.initial_ranges[j][1])
-            
+        
+        # Keep solutions defined by function_evaluations_array
+        recorded_solutions = []
+        
         # Main optimization loop (population_size * num_iter cost function evaluations)
         for iteration in range(self.num_iter):
             # When using adaptive inertia weight
-            acceptance_count = 0
-            
             for particle in range(self.population_size):
                 # Compute cost of new position
                 self.swarm_positions[particle, -1] = self.cost_function(self.swarm_positions[particle, :-1], -1)
@@ -122,16 +130,11 @@ class PSO(Base):
                 # Update personal best solution
                 if self.swarm_positions[particle, -1] < self.personal_bests[particle, -1]:
                     self.personal_bests[particle, :] = self.swarm_positions[particle, :]
-                    
-                    acceptance_count += 1
-                    
+
                     # Update global best solution
                     if self.personal_bests[particle, -1] < self.global_best[-1]:
                         self.global_best = self.personal_bests[particle, :]
                 
-                # Update inertia weight based on succes rate of the swarm
-                # Has no effect in vanilla PSO
-                self.update_inertia_weight(acceptance_count)
                 
                 # Update velocity vector
                 self.swarm_velocities[particle, :] =    self.inertia_weight * (self.swarm_velocities[particle, :]
@@ -148,35 +151,9 @@ class PSO(Base):
                             self.swarm_positions[particle, var] = self.initial_ranges[var][0]
                         elif self.swarm_positions[particle, var] > self.initial_ranges[var][1]:
                             self.swarm_positions[particle, var] = self.initial_ranges[var][1]        
-        
-        return self.global_best
-        
-
-        
-class AIWPSO(PSO):
-    """ Class for the Adaptative Inertia Weight Particle Swarm Optimization (AIWPSO), following (Nickabadi et al., 2011) """
-    def __init__(self):
-        """ Constructor """
-        super().__init__()
-        
-        self.adaptive_inertia = True
-        self.max_inertia = None
-        self.min_inertia = None
-    
-    def set_parameters(self, num_iter, population_size, personal_acceleration, global_acceleration, min_inertia, max_inertia):
-        if min_inertia > max_inertia:
-            print("Max intertia mut be greater than min inertia")
-            exit(-1)
             
-        super().set_parameters(num_iter, population_size, personal_acceleration, global_acceleration)
-        self.min_inertia = min_inertia
-        self.max_inertia = max_inertia
+            if (self.relative_iterations - 1 == iteration).any():
+                recorded_solutions.append(self.global_best)
         
-    def update_inertia_weight(self, acceptance_count):
-        """ Use swarm success rate to update the inertia weight """
-        success_percentage = acceptance_count / self.population_size
-        self.inertia_weight = (self.max_inertia - self.min_inertia) * success_percentage + self.min_inertia
-        
-        
-        
+        return np.array(recorded_solutions)
         
