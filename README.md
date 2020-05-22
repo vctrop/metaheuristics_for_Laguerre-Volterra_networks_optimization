@@ -4,5 +4,4 @@ Optimization of non-structural (continuous) parameters in Laguerre-Volterra netw
 # Software versions
 * python 3.7.3
     * numpy 1.16.2
-    * scipy 1.3.0
     

@@ -19,7 +19,6 @@
 import math
 # 3rth party
 import numpy as np
-from scipy.stats import norm
 # Own
 from base_metaheuristic import Base
 
@@ -37,7 +36,7 @@ class ACOr(Base):
         self.pop_size = 5                               # Population size
         self.k = 50                                     # Archive size
         self.q = 0.01                                   # Locality of search (selection of pivot ants)
-        self.xi = 0.85                                  # Speed of convergence (spreadness of ant generation)
+        self.xi = 0.85                                  # Multiplicative factor of distribution dispersion when generating solutions
         
         # Optimization results
         self.SA = None                                  # Solution Archive
@@ -110,10 +109,13 @@ class ACOr(Base):
         """ q is not updated in vanilla ACOr """
         pass
     
-    def handle_adaptions(self, success_count):
-        self.update_success_rate(success_count)
-        self.control_q()
-        self.control_xi()
+    def gaussian_pdf_weights(self, x):
+        gaus_std = self.q * self.k
+        gaus_avg = 1
+        w = (1 / (gaus_std * math.sqrt(2 * math.pi))) * np.exp( (-1/2) * ( ( (x - gaus_avg) / gaus_std ) ** 2) )
+        
+        return w
+    
     
     def optimize(self):
         """ Initializes the archive and enter the main loop, until it reaches maximum number of iterations """
@@ -136,12 +138,12 @@ class ACOr(Base):
         for i in range(self.k):
             for j in range(self.num_variables): 
                 self.SA[i, j] = np.random.uniform(self.initial_ranges[j][0], self.initial_ranges[j][1])     # Initialize solution archive randomly
-            self.SA[i, -1] = self.cost_function(self.SA[i, 0:self.num_variables], -1)                       # Get initial cost for each solution
+            self.SA[i, -1] = self.cost_function(self.SA[i, 0:self.num_variables], -1)                           # Get initial cost for each solution
         self.SA = self.SA[self.SA[:, -1].argsort()]                                                         # Sort solution archive (best solutions first)
         
         # Array containing indices of solution archive position
         x = np.linspace(1,self.k,self.k) 
-        w = norm.pdf(x,1,self.q*self.k)                                         # Weights as a gaussian function of rank with mean 1, std qk
+        w = self.gaussian_pdf_weights(x)                                         # Weights as a gaussian function of rank with mean 1, std qk
         p = w/sum(w) 
         
         if self.verbosity:   print("ALGORITHM MAIN LOOP")
@@ -150,18 +152,16 @@ class ACOr(Base):
             if self.verbosity:
                 print("[%d]" % iteration)
                 print(self.SA[0, :])
-            
-            success_count = 0                                                   # Count how many ant improve the solution they are sampling from    
+                
             Mi = self.SA[:, 0:self.num_variables]                               # Matrix of means
             for ant in range(self.pop_size):                                    # For each ant in the population
                 l = self._biased_selection(p)                                   # Select solution of the SA to sample from based on probabilities p
+                # Compute average distances from the chosen solution to other solutions
+                # Used as standard deviation of solution generation
+                sigmas_array = self.xi * np.sum(np.abs(self.SA[:,:-1] - self.SA[l, :-1]), axis = 0) / (self.k - 1)
                 
-                for var in range(self.num_variables):                           # Calculate the standard deviation of all variables from solution l
-                    sigma_sum = 0
-                    for i in range(self.k):
-                        sigma_sum += abs(self.SA[i, var] - self.SA[l, var])
-                    sigma = self.xi * (sigma_sum/(self.k - 1))
-                     
+                for var in range(self.num_variables):
+                    sigma = sigmas_array[var]
                     pop[ant, var] = np.random.normal(Mi[l, var], sigma)         # Sample from normal distribution with mean Mi and st. dev. sigma
                     
                     # Search space boundaries violation is only dealt with when the variable is considered bounded (self.is_bounded)
@@ -179,17 +179,10 @@ class ACOr(Base):
                 # Evaluate cost of new solution
                 pop[ant, -1] = self.cost_function(pop[ant, 0:self.num_variables], -1)       
                 
-                # Check if the new solution is better than the one the ant sampled from
-                if pop[ant, -1] < self.SA[l, -1]:
-                    success_count += 1
-                    
-            # Compute success rate, updates xi and q (No effect in vanilla ACOr)
-            self.handle_adaptions(success_count)
-            
             # Append new solutions to the Archive
             self.SA = np.append(self.SA, pop, axis = 0)                                                         
             # Update PDF from which ants sample their centers, according to updates in q parameter
-            w = norm.pdf(x,1,self.q*self.k)                                         # Weights as a gaussian function of rank with mean 1, std qk
+            w = self.gaussian_pdf_weights(x)                                         # Weights as a gaussian function of rank with mean 1, std qk
             p = w/sum(w)                                                            # Probabilities of selecting solutions as search guides
         
             # Sort solution archive according to the fitness of each solution
