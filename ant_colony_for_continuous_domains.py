@@ -36,7 +36,7 @@ class ACOr(Base):
         self.pop_size = 5                               # Population size
         self.k = 50                                     # Archive size
         self.q = 0.01                                   # Locality of search (selection of pivot ants)
-        self.xi = 0.85                                  # Multiplicative factor of distribution dispersion when generating solutions
+        self.xi = 0.85                                  # Speed of convergence (spreadness of ant generation)
         
         # Optimization results
         self.SA = None                                  # Solution Archive
@@ -116,6 +116,10 @@ class ACOr(Base):
         
         return w
     
+    def handle_adaptions(self, success_count):
+        self.update_success_rate(success_count)
+        self.control_q()
+        self.control_xi()
     
     def optimize(self):
         """ Initializes the archive and enter the main loop, until it reaches maximum number of iterations """
@@ -152,7 +156,8 @@ class ACOr(Base):
             if self.verbosity:
                 print("[%d]" % iteration)
                 print(self.SA[0, :])
-                
+            
+            success_count = 0                                                   # Count how many ant improve the solution they are sampling from    
             Mi = self.SA[:, 0:self.num_variables]                               # Matrix of means
             for ant in range(self.pop_size):                                    # For each ant in the population
                 l = self._biased_selection(p)                                   # Select solution of the SA to sample from based on probabilities p
@@ -179,6 +184,13 @@ class ACOr(Base):
                 # Evaluate cost of new solution
                 pop[ant, -1] = self.cost_function(pop[ant, 0:self.num_variables], -1)       
                 
+                # Check if the new solution is better than the one the ant sampled from
+                if pop[ant, -1] < self.SA[l, -1]:
+                    success_count += 1
+                    
+            # Compute success rate, updates xi and q (No effect in vanilla ACOr)
+            self.handle_adaptions(success_count)
+            
             # Append new solutions to the Archive
             self.SA = np.append(self.SA, pop, axis = 0)                                                         
             # Update PDF from which ants sample their centers, according to updates in q parameter
@@ -190,9 +202,8 @@ class ACOr(Base):
             # Remove worst solutions
             self.SA = self.SA[0:self.k, :]   
             # Extract current best solution
-            self.best_solution = self.SA[0, :]
+            self.best_solution = np.array(self.SA[0, :])
             if (self.relative_iterations - 1 == iteration).any():
-                recorded_solutions.append(self.best_solution)
+                recorded_solutions.append(np.array(self.best_solution))
             
         return np.array(recorded_solutions)
-        

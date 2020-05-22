@@ -66,7 +66,7 @@ else:
     L = 2;  H = 4;  Q = 5
 
 # Number of objective function evaluations of interest
-function_evals = [1e3, 5e3, 1e4, 5e4, 1e5]
+function_evals = [1e3, 2e3, 3e3, 4e3, 5e3, 10e3, 15e3, 20e3, 25e3]
 
 # Instantiate metaheuristic
 metaheuristic = None
