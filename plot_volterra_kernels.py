@@ -70,7 +70,7 @@ for m in range(memory):
 
 print("[1st order Volterra kernel]")    
 print(kernel_1)
-plt.figure()
+plt.figure(figsize=(10,10))
 plt.plot(kernel_1)
 
 # Compute 2nd order kernel
@@ -94,11 +94,11 @@ for m1 in range(memory):
 print("[2nd order Volterra kernel]")    
 print(kernel_2)
 
-fig = plt.figure()
+fig = plt.figure(figsize=(10,10))
 ax = fig.gca(projection='3d')
 x = y = np.arange(0, memory, 1)
 X, Y = np.meshgrid(x, y)
-ax.plot_surface(X, Y, kernel_2, cmap='viridis', linewidth=0, antialiased=False, alpha=0.5)
+ax.plot_surface(X, Y, kernel_2, cmap='inferno', antialiased=False, alpha=0.27)
 
 # Customize the z axis.
 ax.set_zlim(-1.01, 1.01)

@@ -15,17 +15,20 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+# 3rd party
 import numpy as np
 import csv
+# Own
 import simulated_systems
 import optimization_utilities
 
 # Write a given LVN structure and system into a file 
 def write_LVN_file(file_name, system_parameters):
+    print(system_parameters)
     L = len(system_parameters[1][0])
     H = len(system_parameters[1])
     Q = len(system_parameters[2][0])
-    system_file_name = file_name + "_system.LVN"
+    system_file_name = 'signals_and_systems/' + file_name + "_system.LVN"
     with open(system_file_name, mode = 'w', newline='') as file:
         writer = csv.writer(file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
         writer.writerow([L, H, Q])

@@ -29,7 +29,7 @@ def NMSE(y, y_pred, alpha):
     M = laguerre_volterra_network_structure.laguerre_filter_memory(alpha)
     
     if len(y) <= M:
-        print("Data length is lesser than required by alpha parameter")
+        print("Data length is less than required by alpha parameter")
         exit(-1)
     
     y = np.array(y)

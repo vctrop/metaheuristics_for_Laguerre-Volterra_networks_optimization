@@ -68,6 +68,7 @@ else:
 # Number of objective function evaluations of interest
 function_evals = [1e3, 2e3, 3e3, 4e3, 5e3, 10e3, 15e3, 20e3, 25e3]
 
+
 # Instantiate metaheuristic
 metaheuristic = None
 if metaheuristic_name == "acor":
@@ -128,6 +129,7 @@ metaheuristic.set_verbosity(False)
 # Run the metaheuristic 30 times and save results for the best found solution of each run
 # For each found solution, compute cost function on test set
 test_input, test_output = data_handling.read_io(test_filename)
+train_solutions = []
 train_costs = []
 test_costs = []
 LVN = laguerre_volterra_network_structure.LVN()
@@ -143,7 +145,9 @@ for i in range(30):
     time_end = time.process_time()
     # Keep time spent
     optimization_times.append(time_end - time_start)
-    # Keep solution found
+    # Keep full solutions
+    train_solutions.append(np.array(solutions_at_FEs))
+    # Keep costs separate
     train_costs.append(solutions_at_FEs[:, -1])
     # Decode solution and evaluate parameters on test set
     run_test_NMSEs = []
@@ -155,6 +159,7 @@ for i in range(30):
     test_costs.append(run_test_NMSEs)
 
 output_base_filename = metaheuristic_name + '_' + order_str
-np.save('./results/' + output_base_filename + '_times.npy'      , optimization_times)    
+np.save('./results/' + output_base_filename + '_times.npy'          , optimization_times)   
+np.save('./results/' + output_base_filename + '_train_solutions.npy', train_solutions)
 np.save('./results/' + output_base_filename + '_train_costs.npy', train_costs)
 np.save('./results/' + output_base_filename + '_test_costs.npy' , test_costs)
