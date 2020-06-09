@@ -21,14 +21,14 @@ import numpy as np
 # acor_finite_train_costs.npy
 # acor_finite_train_costs.npy
 
-function_evals = [1e3, 2e3, 3e3, 4e3, 5e3, 10e3, 15e3, 20e3, 25e3]
-function_evals_str = ['1e3', '2e3', '3e3', '4e3', '5e3', '10e3', '15e3', '20e3', '25e3']
+function_evals = [i * 100 for i in range(101)] + [11000 + i * 1000 for i in range(90)]
+function_evals_str = [str(i) for i in function_evals]
 function_evals_of_interest = [1e3, 5e3,10e3,15e3,20e3,25e3]
 evals_mask = [eval in function_evals_of_interest for eval in function_evals]
 
 for system_order in ['finite', 'infinite']:
     print(system_order)
-    for algorithm in ['sa', 'pso', 'acor']:
+    for algorithm in ['sa', 'acfsa', 'pso', 'aiwpso', 'acor', 'baacor']:
         print(algorithm)
         base_filename = './results/' + algorithm + '_' + system_order
         
