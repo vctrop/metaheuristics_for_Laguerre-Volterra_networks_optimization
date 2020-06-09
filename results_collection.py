@@ -94,7 +94,7 @@ elif metaheuristic_name == 'sa':
     print('SA')
     # Parameters to be used for SA
     initial_temperature = 10.0;  cooling_constant = 0.99;  step_size = 1e-2;
-    local_iterations = 500
+    local_iterations = 100
     metaheuristic = simulated_annealing.SA()
     metaheuristic.set_parameters(initial_temperature, cooling_constant, step_size, local_iterations, function_evals)
     
@@ -121,8 +121,9 @@ else: # metaheuristic_name == "aiwpso":
     print("AIWPSO")
     # Parameters to be used for AIWPSO
     swarm_size = 20;  personal_acceleration = 2;  global_acceleration = 2
+    min_inertia = 0.3; max_inertia = 0.99
     metaheuristic = particle_swarm_optimization.AIWPSO()
-    metaheuristic.set_parameters(swarm_size, personal_acceleration, global_acceleration, function_evals)
+    swarm.set_parameters(swarm_size, personal_acceleration, global_acceleration, min_inertia, max_inertia, function_evals)
     
 # Cost function definition based on structural parameters and ground truth
 metaheuristic.set_cost(optimization_utilities.define_cost(L, H, Q, Fs, train_filename))
