@@ -207,3 +207,241 @@ class ACOr(Base):
                 recorded_solutions.append(np.array(self.best_solution))
             
         return np.array(recorded_solutions)
+        
+        
+
+# Success rate adaptive ACOr 
+class SRAACOr(ACOr):
+    """ Parent class of all adaptive versions of ACOr."""
+    
+    def __init__(self):
+        """ Constructor """
+        super().__init__()
+        self.success_rate = None
+        self.min =      {'q' : None,
+                         'xi': None}
+        self.max =      {'q' : None,
+                         'xi': None}
+        self.map_type = {'q' : None,
+                         'xi': None}
+                         
+        self.lin_a =    {'q' : None,
+                        'xi': None}
+        self.lin_b =    {'q' : None,
+                        'xi': None}
+                        
+        self.sig_K = 2
+        self.sig_Q =    {'q' : None,
+                        'xi': None}
+        self.sig_B =    {'q' : None,
+                         'xi': None}
+                         
+        self.exp_A =    {'q' : None,
+                         'xi': None}
+        self.exp_B =    {'q' : None,
+                         'xi': None}
+        
+        
+    def update_success_rate(self, success_count):
+        """ Returns the success rate of the swarm at a given iteration,
+            considering how many ants generated better solutions than the solutions they sampled from """
+        self.success_rate = success_count / self.pop_size
+       
+       
+    def parameterize_map(self, parameter):
+        if not isinstance(parameter, str) or (parameter != 'q' and parameter != 'xi'):
+            print('Parameter must be a string equal to \'q\' or \'xi\'')
+            exit(-1)
+        
+        if self.map_type[parameter] == 'lin':
+            self.lin_a[parameter] = self.max[parameter] - self.min[parameter]
+            self.lin_b[parameter] = self.min[parameter]
+        elif self.map_type[parameter] == 'sig':
+            self.sig_Q[parameter] = (self.sig_K - self.min[parameter]) / self.min[parameter]
+            self.sig_B[parameter] = math.log( (self.max[parameter] / (self.sig_K - self.max[parameter])) * self.sig_Q[parameter])
+        else:
+            self.exp_A[parameter] = self.min[parameter]
+            self.exp_B[parameter] = math.log( self.max[parameter] / self.min[parameter] )
+        
+        
+    def evaluate_map(self, parameter, x):
+        if not isinstance(parameter, str) or (parameter != 'q' and parameter != 'xi'):
+            print('Parameter must be a string equal to \'q\' or \'xi\'')
+            exit(-1)
+        
+        if self.map_type[parameter] == None:
+            print('Please first define the map type of ' + parameter)
+            exit(-1)
+        
+        # Linear map
+        if self.map_type[parameter] == 'lin':
+            if self.lin_a[parameter] == None or self.lin_b[parameter] == None:
+                print('Error, first parameterize the line')
+                exit(-1)
+            y = self.lin_a[parameter] * x + self.lin_b[parameter]
+        # Sigmoidal map
+        elif self.map_type[parameter] == 'sig':
+            if self.sig_Q[parameter] == None or self.sig_B[parameter] == None:
+                print('Error, first parameterize the sigmoid')
+                exit(-1)
+            y = self.sig_K / (1 + self.sig_Q[parameter] * math.exp(- self.sig_B[parameter] * x))
+        # Exponential map
+        else:
+            if self.exp_A[parameter] == None or self.exp_B[parameter] == None:
+                print('Error, first parameterize the exponential')
+                exit(-1)
+            y = self.exp_A[parameter] * math.exp( self.exp_B[parameter] * x )
+        return y
+        
+    
+# Adaptive elitism level ACOr
+class AELACOr(SRAACOr):
+    """ Adaptive control of the q parameter """
+    def __init__(self):
+        """ Constructor """
+        super().__init__()
+    
+    def set_parameters(self, pop_size, k, xi, min_q, max_q, map_type, function_evaluations_array):
+        """ Define values for the parameters used by the algorithm """
+        # Input error checking
+        if min_q > max_q:
+            print('Error, maximum q must be greater than minimum q')
+            exit(-1)
+        if min_q <= 0:
+            print('Error, minimum q must be greater than zero')
+            exit(-1)
+        if not isinstance(map_type, str):
+            print('Error, map from success rate to q must be a string')
+            exit(-1)
+        if map_type != 'lin' and map_type != 'sig' and map_type != 'exp':
+            print('Error, map type must be \'lin\', \'sig\' or \'exp\'')
+            exit(-1)
+        if map_type == 'sig' and max_q >= self.sig_K:
+            print('Error, maximum q must be lesser than sigmoid K = ' + str(self.sig_K))
+        
+        # Parameter setting from ACOr class
+        super().set_parameters(pop_size, k, max_q, xi, function_evaluations_array)    
+
+        # Parameterize control curve
+        self.min['q'] = min_q
+        self.max['q'] = max_q
+        self.map_type['q'] = map_type
+        self.parameterize_map('q')
+        
+    
+    def control_q(self):
+        """ Use population success rate to update q """
+        if self.success_rate == None:
+            print("Error, compute success rate before updating q")
+            exit(-1)
+        
+        # Compute new q, directly proportional (linearity or not) to the success rate
+        self.q = self.evaluate_map('q', self.success_rate)
+        
+    
+# Adaptive generation dispersion ACOr
+class AGDACOr(SRAACOr):
+    """ Adaptive control of the xi parameter """
+    
+    def __init__(self):
+        """ Constructor """
+        super().__init__()
+    
+    def set_parameters(self, pop_size, k, q, min_xi, max_xi, map_type, function_evaluations_array):
+        """ Define values for the parameters used by the algorithm """
+        # Input error checking
+        if min_xi > max_xi:
+            print('Error, maximum xi must be greater than minimum xi')
+            exit(-1)
+        if min_xi <= 0:
+            print('Error, minimum xi must be greater than zero')
+            exit(-1)
+        if not isinstance(map_type, str):
+            print('Error, map from success rate to xi must be a string')
+            exit(-1)
+        if map_type != 'lin' and map_type != 'sig' and map_type != 'exp':
+            print('Error, map type must be \'lin\', \'sig\' or \'exp\'')
+            exit(-1)
+        if map_type == 'sig' and max_xi >= self.sig_K:
+            print('Error, maximum xi must be lesser than sigmoid K = ' + str(self.sig_K))
+        
+        # Parameter setting from ACOr class
+        super().set_parameters(pop_size, k, q, max_xi, function_evaluations_array)    
+
+        # Minimum and maximum of adaptive xi
+        # Parameterize control curve
+        self.min['xi'] = min_xi
+        self.max['xi'] = max_xi
+        self.map_type['xi'] = map_type
+        self.parameterize_map('xi')
+        
+    def control_xi(self):
+        """ Use population success rate to update Xi """
+        if self.success_rate == None:
+            print("Error, compute success rate before updating xi")
+            exit(-1)
+        
+        # Compute new xi, inversely proportional (linearity or not) to the success rate
+        self.xi = self.evaluate_map('xi', (1 - self.success_rate))
+
+    
+# Bi-adaptive ACOr
+class BAACOr(SRAACOr):
+    """ Adaptive control of the both q and xi parameters """
+    
+    def __init__(self):
+        """ Constructor """
+        super().__init__()
+
+    
+    def set_parameters(self, pop_size, k, min_q, max_q, min_xi, max_xi, q_map_type, xi_map_type, function_evaluations_array):
+        """ Define values for the parameters used by the algorithm """
+        # Input error checking
+        if min_xi > max_xi or min_q > min_q:
+            print('Error, maximum parameters must be greater than minimum ones')
+            exit(-1)
+        if min_xi <= 0 or min_q <= 0:
+            print('Error, minimum parameters must be greater than zero')
+            exit(-1)
+        if not isinstance(q_map_type, str) or not isinstance(xi_map_type, str):
+            print('Error, maps from success rate to parameters must be strings')
+            exit(-1)
+        if  (q_map_type  != 'lin' and q_map_type  != 'sig' and q_map_type  != 'exp') or (xi_map_type != 'lin' and xi_map_type != 'sig' and xi_map_type != 'exp'):
+            print('Error, map types must be \'lin\', \'sig\' or \'exp\'')
+            exit(-1)
+        if (q_map_type == 'sig' and max_q >= self.sig_K) or (xi_map_type == 'sig' and max_xi >= self.sig_K):
+            print('Error, maximum parameters value must be lesser than sigmoid K = ' + str(self.sig_K))
+            
+        # Parameter setting from ACOr class
+        super().set_parameters(pop_size, k, max_q, max_xi, function_evaluations_array)
+
+        # Parameterize xi control curve
+        self.min['xi'] = min_xi
+        self.max['xi'] = max_xi
+        self.map_type['xi'] = xi_map_type
+        self.parameterize_map('xi')
+        # Parameterize q control curve
+        self.min['q'] = min_q
+        self.max['q'] = max_q
+        self.map_type['q'] = q_map_type
+        self.parameterize_map('q')
+        
+    
+    def control_xi(self):
+        """ Use population success rate to update Xi """
+        if self.success_rate == None:
+            print("Error, first compute success rate")
+            exit(-1)
+        
+        # Compute new xi
+        self.xi = self.evaluate_map('xi', (1 - self.success_rate))
+        
+      
+    def control_q(self):
+        """ Use population success rate to update Xi """
+        if self.success_rate == None:
+            print("Error, first compute success rate")
+            exit(-1)
+        
+        # Compute new q
+        self.q = self.evaluate_map('q', self.success_rate)

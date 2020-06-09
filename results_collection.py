@@ -33,20 +33,20 @@ import particle_swarm_optimization
 
 # Argument number checking
 if len(sys.argv) != 3:
-    print("Error, wrong number of arguments. Execute this script as follows:\npython3 %s {simulated system order} {metaheuristic}" % sys.argv[0])
-    print("The allowed values are: order = {\"finite\", \"infinite\"},  metaheuristic = {\"ACOr\", \"SA\", \"PSO\"}")
+    print('Error, wrong number of arguments. Execute this script as follows:\npython3 %s {simulated system order} {metaheuristic}' % sys.argv[0])
+    print('The allowed values are: order = {\'finite\', \'infinite\'},  metaheuristic = {\'ACOr\', \'SA\', \'PSO\'}')
     exit(-1)
     
 # Argument coherence checking
 order_str = sys.argv[1] 
-if order_str != "finite" and order_str != "infinite":
-    print("Error, choose either \"finite\" or \"infinite\" for the simulated system order")
+if order_str != 'finite' and order_str != 'infinite':
+    print('Error, choose either \'finite\' or \'infinite\' for the simulated system order')
     exit(-1)
     
 metaheuristic_name = (sys.argv[2]).lower()
 
-if metaheuristic_name != "acor" and metaheuristic_name != "sa" and metaheuristic_name != "pso":
-    print("Error, choose an available metaheuristic")
+if metaheuristic_name != 'acor' and metaheuristic_name != 'baacor'  and metaheuristic_name != 'sa' and metaheuristic_name != 'acfsa' and metaheuristic_name != 'pso' and metaheuristic_name != 'aiwpso':
+    print('Error, choose an available metaheuristic')
     exit(-1)
 
 # Filenames for train and test signals
@@ -60,37 +60,68 @@ L = None;   H = None;    Q = None;
 # Whether the simulated system has finite or infinite order determines the structure of the optimized LVN and from which file the data will be loaded
 train_filename = './signals_and_systems/' + order_str + '_order_train.csv'
 test_filename  = './signals_and_systems/' + order_str + '_order_test.csv'
-if order_str == "finite":
+if order_str == 'finite':
     L = 5;  H = 3;  Q = 4
 else:
     L = 2;  H = 4;  Q = 5
 
 # Number of objective function evaluations of interest
-function_evals = [1e3, 2e3, 3e3, 4e3, 5e3, 10e3, 15e3, 20e3, 25e3]
-
+#function_evals = [i * 100 for i in range(101)] + [11000 + i * 1000 for i in range(90)]
+function_evals = [100]
 
 # Instantiate metaheuristic
 metaheuristic = None
-if metaheuristic_name == "acor":
-    print("ACOr")
+if metaheuristic_name == 'acor':
+    print('ACOr')
     # Parameters used for ACOr
     k = 50;  pop_size = 10;  q = 0.01; xi = 0.85
     metaheuristic = ant_colony_for_continuous_domains.ACOr()
     metaheuristic.set_parameters(pop_size, k, q, xi, function_evals)
+    
+elif metaheuristic_name == 'baacor':
+    print('BAACOr')
+    # Parameters used for BAACOr
+    k = 50
+    m = 10
+    q_min = 1e-2;    q_max = 1.0
+    xi_min = 0.1;    xi_max = 0.93
+    # Configure
+    metaheuristic = ant_colony_for_continuous_domains.BAACOr()
+    metaheuristic.set_verbosity(False)
+    metaheuristic.set_parameters(m, k, q_min, q_max, xi_min, xi_max, 'exp', 'sig', function_evals)
 
-elif metaheuristic_name == "sa":
-    print("SA")
+elif metaheuristic_name == 'sa':
+    print('SA')
     # Parameters to be used for SA
     initial_temperature = 10.0;  cooling_constant = 0.99;  step_size = 1e-2;
     local_iterations = 500
     metaheuristic = simulated_annealing.SA()
     metaheuristic.set_parameters(initial_temperature, cooling_constant, step_size, local_iterations, function_evals)
+    
+elif metaheuristic_name == 'acfsa':
+    print('ACFSA')
+    # Parameters to be used for ACFSA
+    local_iterations = 100
+    initial_temperature = 50
+    cooling_constant = 0.99 
+    # Configure
+    metaheuristic = simulated_annealing.ACFSA()
+    metaheuristic.set_verbosity(False)
+    metaheuristic.set_parameters(initial_temperature, cooling_constant, local_iterations, function_evals)
 
-else: # metaheuristic_name == "pso":
-    print("PSO")
+
+elif metaheuristic_name == 'pso':
+    print('PSO')
     # Parameters to be used for PSO
     swarm_size = 20;  personal_acceleration = 2;  global_acceleration = 2
     metaheuristic = particle_swarm_optimization.PSO()
+    metaheuristic.set_parameters(swarm_size, personal_acceleration, global_acceleration, function_evals)
+    
+else: # metaheuristic_name == "aiwpso":
+    print("AIWPSO")
+    # Parameters to be used for AIWPSO
+    swarm_size = 20;  personal_acceleration = 2;  global_acceleration = 2
+    metaheuristic = particle_swarm_optimization.AIWPSO()
     metaheuristic.set_parameters(swarm_size, personal_acceleration, global_acceleration, function_evals)
     
 # Cost function definition based on structural parameters and ground truth
@@ -137,9 +168,10 @@ LVN.define_structure(L, H, Q, 1/Fs)
 # Keep how much seconds each call to .optimize() spends
 optimization_times = []
 
-for i in range(30):
+#for i in range(30):
+for i in range(2):
     # Search parameters on train set
-    print("Round %d" % i)
+    print('Round %d' % i)
     time_start = time.process_time()
     solutions_at_FEs = metaheuristic.optimize()
     time_end = time.process_time()
