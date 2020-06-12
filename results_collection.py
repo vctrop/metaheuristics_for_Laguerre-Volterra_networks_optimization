@@ -184,7 +184,7 @@ for i in range(30):
     run_test_NMSEs = []
     for solution in solutions_at_FEs:
         alpha, W, C, offset = optimization_utilities.decode_solution(solution, L, H, Q)
-        test_out_prediction = LVN.compute_output(test_input, alpha, W, C, offset, True)
+        test_out_prediction = LVN.propagate_LVN(test_input, alpha, W, C, offset, True)
         test_nmse = optimization_utilities.NMSE(test_output, test_out_prediction, alpha)
         run_test_NMSEs.append(test_nmse) 
     test_costs.append(run_test_NMSEs)

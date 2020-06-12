@@ -80,7 +80,7 @@ def define_cost(L, H, Q, Fs, train_filename):
         # Generate output and compute cost
         solution_system = laguerre_volterra_network_structure.LVN()
         solution_system.define_structure(L, H, Q, 1/Fs)
-        solution_output = solution_system.compute_output(train_input, alpha, W, C, offset, weights_modified)
+        solution_output = solution_system.propagate_LVN(train_input, alpha, W, C, offset, weights_modified)
         
         cost = NMSE(train_output, solution_output, alpha)
         
