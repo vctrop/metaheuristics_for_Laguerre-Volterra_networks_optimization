@@ -66,8 +66,7 @@ else:
     L = 2;  H = 4;  Q = 5
 
 # Number of objective function evaluations of interest
-#function_evals = [i * 100 for i in range(101)] + [11000 + i * 1000 for i in range(90)]
-function_evals = [100]
+function_evals = [i * 100 for i in range(101)] + [11000 + i * 1000 for i in range(90)]
 
 # Instantiate metaheuristic
 metaheuristic = None
@@ -123,8 +122,8 @@ else: # metaheuristic_name == "aiwpso":
     swarm_size = 20;  personal_acceleration = 2;  global_acceleration = 2
     min_inertia = 0.3; max_inertia = 0.99
     metaheuristic = particle_swarm_optimization.AIWPSO()
-    swarm.set_parameters(swarm_size, personal_acceleration, global_acceleration, min_inertia, max_inertia, function_evals)
-    
+    metaheuristic.set_parameters(swarm_size, personal_acceleration, global_acceleration, min_inertia, max_inertia, function_evals)
+
 # Cost function definition based on structural parameters and ground truth
 metaheuristic.set_cost(optimization_utilities.define_cost(L, H, Q, Fs, train_filename))
 
@@ -169,8 +168,7 @@ LVN.define_structure(L, H, Q, 1/Fs)
 # Keep how much seconds each call to .optimize() spends
 optimization_times = []
 
-#for i in range(30):
-for i in range(2):
+for i in range(30):
     # Search parameters on train set
     print('Round %d' % i)
     time_start = time.process_time()
