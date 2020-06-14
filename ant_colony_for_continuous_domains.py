@@ -23,10 +23,10 @@ import numpy as np
 from base_metaheuristic import Base
 
 class ACOr(Base):
-    """ Class for the Ant Colony Optimization for Continuous Domains, following (Socha and Dorigo, 2006) """
+    ''' Class for the Ant Colony Optimization for Continuous Domains, following (Socha and Dorigo, 2006) '''
 
     def __init__(self):
-        """ Constructor """
+        ''' Constructor '''
         # Define verbosity and NULL problem definition
         super().__init__()
         
@@ -36,30 +36,35 @@ class ACOr(Base):
         self.pop_size = 5                               # Population size
         self.k = 50                                     # Archive size
         self.q = 0.01                                   # Locality of search (selection of pivot ants)
-        self.xi = 0.85                                  # Speed of convergence (spreadness of ant generation)
+        self.xi = 0.85                                  # Speed of convergence (affects the dispersion of the ants' solution generation distribution)
+        
+        # Depending on is_cost_dynamic, ACOr passes the proportion between current iteration and maximum number of iterations to the cost function or not
+        self.is_cost_dynamic = False
         
         # Optimization results
         self.SA = None                                  # Solution Archive
         self.best_solution = None                       # Best solution of the archive
         
 
-    def set_parameters(self, pop_size, k, q, xi, function_evaluations_array):
-        """ Define values for the parameters used by the algorithm """
+    def set_parameters(self, pop_size, k, q, xi, is_cost_dynamic, function_evaluations_array):
+        ''' Define values for the parameters used by the algorithm '''
         # Input error checking
         if len(function_evaluations_array) == 0:
-            print("Error, objective function evaluation array must not be empty")
+            print('Error, objective function evaluation array must not be empty')
             exit(-1)
         if pop_size <= 0 or k <= 0 or q <= 0 or xi <= 0:
-            print("Error, parameters must be non-null positives")
+            print('Error, parameters must be non-null positives')
             exit(-1)
-            
+        if not isinstance(is_cost_dynamic, bool):
+            print('Error, is_cost_dynamic must be a boolean')
+            exit(-1)
         
         # Number of function evaluations for ACOr: pop_size * num_iterations
         function_evaluations_array = np.array(function_evaluations_array)
         self.relative_iterations = (function_evaluations_array - k) / pop_size
         all_divisible = (np.array([x.is_integer() for x in self.relative_iterations])).all()
         if not all_divisible:
-            print("Error, at least one number of function evaluations subtracted by k is not divisible by population size m")
+            print('Error, at least one number of function evaluations subtracted by k is not divisible by population size m')
             exit(-1)
         
         self.num_iter = int(np.max(self.relative_iterations))
@@ -67,19 +72,20 @@ class ACOr(Base):
         self.k = k
         self.q = q
         self.xi = xi
-
+        self.is_cost_dynamic = is_cost_dynamic
+        
     
     def define_variables(self, initial_ranges, is_bounded):
-        """ Defines the number of variables, their initial values ranges and wether or not these ranges constrain the variable during the search """
+        ''' Defines the number of variables, their initial values ranges and wether or not these ranges constrain the variable during the search '''
         # Input error checking
         if self.num_iter == 0:
-            print("Error, please set algorithm parameters before variables definition")
+            print('Error, please set algorithm parameters before variables definition')
             exit(-1)
         if len(initial_ranges) == 0 or len(is_bounded) == 0:
-            print("Error, initial_ranges and is_bounded lists must not be empty")
+            print('Error, initial_ranges and is_bounded lists must not be empty')
             exit(-1)
         if len(initial_ranges) != len(is_bounded):
-            print("Error, the number of variables for initial_ranges and is_bounded must be equal")
+            print('Error, the number of variables for initial_ranges and is_bounded must be equal')
             exit(-1)
         
         self.num_variables = len(initial_ranges)
@@ -89,7 +95,7 @@ class ACOr(Base):
 
     
     def _biased_selection(self, probabilities):
-        """ Returns an index based on a set of probabilities (also known as roulette wheel selection in GA) """
+        ''' Returns an index based on a set of probabilities (also known as roulette wheel selection in GA) '''
         r = np.random.uniform(0, sum(probabilities))
         for i, f in enumerate(probabilities):
             r -= f
@@ -98,15 +104,15 @@ class ACOr(Base):
     
 
     def update_success_rate(self, success_count):
-        """ Success rate is not updated in vanilla ACOr """
+        ''' Success rate is not updated in vanilla ACOr '''
         pass
     
     def control_xi(self):
-        """ Xi is not updated in vanilla ACOr """
+        ''' Xi is not updated in vanilla ACOr '''
         pass
     
     def control_q(self):
-        """ q is not updated in vanilla ACOr """
+        ''' q is not updated in vanilla ACOr '''
         pass
     
     def gaussian_pdf_weights(self, x):
@@ -122,39 +128,43 @@ class ACOr(Base):
         self.control_xi()
     
     def optimize(self):
-        """ Initializes the archive and enter the main loop, until it reaches maximum number of iterations """
+        ''' Initializes the archive and enter the main loop, until it reaches maximum number of iterations '''
         # Error checking
         if self.num_variables == None:
-            print("Error, number of variables and their boundaries must be defined prior to optimization")
+            print('Error, number of variables and their boundaries must be defined prior to optimization')
             exit(-1)
         if self.cost_function == None:
-            print("Error, cost function must be defined prior to optimization")
+            print('Error, cost function must be defined prior to optimization')
             exit(-1)
         
         # Keep solutions defined by function_evaluations_array
         recorded_solutions = []
         
         # Initialize the archive by random sampling, respecting each variable's boundaries   
-        if self.verbosity:   print("[INITIALIZING SOLUTION ARCHIVE]")
+        if self.verbosity:   print('[INITIALIZING SOLUTION ARCHIVE]')
         pop = np.zeros((self.pop_size, self.num_variables +1))
         w = np.zeros(self.k)
         
         for i in range(self.k):
             for j in range(self.num_variables): 
                 self.SA[i, j] = np.random.uniform(self.initial_ranges[j][0], self.initial_ranges[j][1])     # Initialize solution archive randomly
-            self.SA[i, -1] = self.cost_function(self.SA[i, 0:self.num_variables], -1)                           # Get initial cost for each solution
+            # Cost evaluation
+            if self.is_cost_dynamic:
+                self.SA[i, -1] = self.cost_function(self.SA[i, 0:self.num_variables], 0.0 , -1)                 # Get initial cost for each solution
+            else:
+                self.SA[i, -1] = self.cost_function(self.SA[i, 0:self.num_variables], -1)                 # Get initial cost for each solution
         self.SA = self.SA[self.SA[:, -1].argsort()]                                                         # Sort solution archive (best solutions first)
         
         # Array containing indices of solution archive position
         x = np.linspace(1,self.k,self.k) 
-        w = self.gaussian_pdf_weights(x)                                         # Weights as a gaussian function of rank with mean 1, std qk
+        w = self.gaussian_pdf_weights(x)                                         # Weights as a Gaussian function of rank with mean 1, std q*k
         p = w/sum(w) 
         
-        if self.verbosity:   print("ALGORITHM MAIN LOOP")
+        if self.verbosity:   print('ALGORITHM MAIN LOOP')
         # Algorithm runs until it reaches the determined number of iterations
         for iteration in range(self.num_iter):
             if self.verbosity:
-                print("[%d]" % iteration)
+                print('[%d]' % iteration)
                 print(self.SA[0, :])
             
             success_count = 0                                                   # Count how many ant improve the solution they are sampling from    
@@ -182,7 +192,10 @@ class ACOr(Base):
                             # pop[ant, var] = np.random.uniform(self.initial_ranges[var][0], self.initial_ranges[var][1])
                     
                 # Evaluate cost of new solution
-                pop[ant, -1] = self.cost_function(pop[ant, 0:self.num_variables], -1)       
+                if self.is_cost_dynamic:
+                    pop[ant, -1] = self.cost_function(pop[ant, 0:self.num_variables], iteration/self.num_iter , -1)       
+                else:
+                    pop[ant, -1] = self.cost_function(pop[ant, 0:self.num_variables], -1)       
                 
                 # Check if the new solution is better than the one the ant sampled from
                 if pop[ant, -1] < self.SA[l, -1]:
@@ -212,10 +225,10 @@ class ACOr(Base):
 
 # Success rate adaptive ACOr 
 class SRAACOr(ACOr):
-    """ Parent class of all adaptive versions of ACOr."""
+    ''' Parent class of all adaptive versions of ACOr.'''
     
     def __init__(self):
-        """ Constructor """
+        ''' Constructor '''
         super().__init__()
         self.success_rate = None
         self.min =      {'q' : None,
@@ -243,8 +256,8 @@ class SRAACOr(ACOr):
         
         
     def update_success_rate(self, success_count):
-        """ Returns the success rate of the swarm at a given iteration,
-            considering how many ants generated better solutions than the solutions they sampled from """
+        ''' Returns the success rate of the swarm at a given iteration,
+            considering how many ants generated better solutions than the solutions they sampled from '''
         self.success_rate = success_count / self.pop_size
        
        
@@ -296,13 +309,13 @@ class SRAACOr(ACOr):
     
 # Adaptive elitism level ACOr
 class AELACOr(SRAACOr):
-    """ Adaptive control of the q parameter """
+    ''' Adaptive control of the q parameter '''
     def __init__(self):
-        """ Constructor """
+        ''' Constructor '''
         super().__init__()
     
-    def set_parameters(self, pop_size, k, xi, min_q, max_q, map_type, function_evaluations_array):
-        """ Define values for the parameters used by the algorithm """
+    def set_parameters(self, pop_size, k, xi, min_q, max_q, map_type, is_cost_dynamic, function_evaluations_array):
+        ''' Define values for the parameters used by the algorithm '''
         # Input error checking
         if min_q > max_q:
             print('Error, maximum q must be greater than minimum q')
@@ -318,9 +331,11 @@ class AELACOr(SRAACOr):
             exit(-1)
         if map_type == 'sig' and max_q >= self.sig_K:
             print('Error, maximum q must be lesser than sigmoid K = ' + str(self.sig_K))
-        
+        if not isinstance(is_cost_dynamic, bool):
+            print('Error, is_cost_dynamic must be a boolean')
+            exit(-1)
         # Parameter setting from ACOr class
-        super().set_parameters(pop_size, k, max_q, xi, function_evaluations_array)    
+        super().set_parameters(pop_size, k, max_q, xi, is_cost_dynamic, function_evaluations_array)    
 
         # Parameterize control curve
         self.min['q'] = min_q
@@ -330,9 +345,9 @@ class AELACOr(SRAACOr):
         
     
     def control_q(self):
-        """ Use population success rate to update q """
+        ''' Use population success rate to update q '''
         if self.success_rate == None:
-            print("Error, compute success rate before updating q")
+            print('Error, compute success rate before updating q')
             exit(-1)
         
         # Compute new q, directly proportional (linearity or not) to the success rate
@@ -341,14 +356,14 @@ class AELACOr(SRAACOr):
     
 # Adaptive generation dispersion ACOr
 class AGDACOr(SRAACOr):
-    """ Adaptive control of the xi parameter """
+    ''' Adaptive control of the xi parameter '''
     
     def __init__(self):
-        """ Constructor """
+        ''' Constructor '''
         super().__init__()
     
-    def set_parameters(self, pop_size, k, q, min_xi, max_xi, map_type, function_evaluations_array):
-        """ Define values for the parameters used by the algorithm """
+    def set_parameters(self, pop_size, k, q, min_xi, max_xi, map_type, is_cost_dynamic, function_evaluations_array):
+        ''' Define values for the parameters used by the algorithm '''
         # Input error checking
         if min_xi > max_xi:
             print('Error, maximum xi must be greater than minimum xi')
@@ -364,9 +379,12 @@ class AGDACOr(SRAACOr):
             exit(-1)
         if map_type == 'sig' and max_xi >= self.sig_K:
             print('Error, maximum xi must be lesser than sigmoid K = ' + str(self.sig_K))
-        
+        if not isinstance(is_cost_dynamic, bool):
+            print('Error, is_cost_dynamic must be a boolean')
+            exit(-1)
+            
         # Parameter setting from ACOr class
-        super().set_parameters(pop_size, k, q, max_xi, function_evaluations_array)    
+        super().set_parameters(pop_size, k, q, max_xi, is_cost_dynamic, function_evaluations_array)    
 
         # Minimum and maximum of adaptive xi
         # Parameterize control curve
@@ -376,9 +394,9 @@ class AGDACOr(SRAACOr):
         self.parameterize_map('xi')
         
     def control_xi(self):
-        """ Use population success rate to update Xi """
+        ''' Use population success rate to update Xi '''
         if self.success_rate == None:
-            print("Error, compute success rate before updating xi")
+            print('Error, compute success rate before updating xi')
             exit(-1)
         
         # Compute new xi, inversely proportional (linearity or not) to the success rate
@@ -387,15 +405,15 @@ class AGDACOr(SRAACOr):
     
 # Bi-adaptive ACOr
 class BAACOr(SRAACOr):
-    """ Adaptive control of the both q and xi parameters """
+    ''' Adaptive control of the both q and xi parameters '''
     
     def __init__(self):
-        """ Constructor """
+        ''' Constructor '''
         super().__init__()
 
     
-    def set_parameters(self, pop_size, k, min_q, max_q, min_xi, max_xi, q_map_type, xi_map_type, function_evaluations_array):
-        """ Define values for the parameters used by the algorithm """
+    def set_parameters(self, pop_size, k, min_q, max_q, min_xi, max_xi, q_map_type, xi_map_type, is_cost_dynamic, function_evaluations_array):
+        ''' Define values for the parameters used by the algorithm '''
         # Input error checking
         if min_xi > max_xi or min_q > min_q:
             print('Error, maximum parameters must be greater than minimum ones')
@@ -411,9 +429,12 @@ class BAACOr(SRAACOr):
             exit(-1)
         if (q_map_type == 'sig' and max_q >= self.sig_K) or (xi_map_type == 'sig' and max_xi >= self.sig_K):
             print('Error, maximum parameters value must be lesser than sigmoid K = ' + str(self.sig_K))
+        if not isinstance(is_cost_dynamic, bool):
+            print('Error, is_cost_dynamic must be a boolean')
+            exit(-1)
             
         # Parameter setting from ACOr class
-        super().set_parameters(pop_size, k, max_q, max_xi, function_evaluations_array)
+        super().set_parameters(pop_size, k, max_q, max_xi, is_cost_dynamic, function_evaluations_array)
 
         # Parameterize xi control curve
         self.min['xi'] = min_xi
@@ -428,9 +449,9 @@ class BAACOr(SRAACOr):
         
     
     def control_xi(self):
-        """ Use population success rate to update Xi """
+        ''' Use population success rate to update Xi '''
         if self.success_rate == None:
-            print("Error, first compute success rate")
+            print('Error, first compute success rate')
             exit(-1)
         
         # Compute new xi
@@ -438,9 +459,9 @@ class BAACOr(SRAACOr):
         
       
     def control_q(self):
-        """ Use population success rate to update Xi """
+        ''' Use population success rate to update Xi '''
         if self.success_rate == None:
-            print("Error, first compute success rate")
+            print('Error, first compute success rate')
             exit(-1)
         
         # Compute new q

@@ -48,7 +48,7 @@ def NMSE(y, y_pred, alpha):
 # Normalized mean squared error that does not consider alpha, used in dynamic cost function
 def raw_NMSE(y, y_pred):
     if len(y) != len(y_pred):
-        print('Actual and predicted y have different lengths')
+        print('Error, actual and predicted y have different lengths')
         exit(-1)
         
     y = np.array(y)
@@ -105,7 +105,7 @@ def define_cost(L, H, Q, Fs, train_filename):
     solution_system.define_structure(L, H, Q, 1/Fs)
     # Compute cost of a candidate solution, which is encoded as a flat array: alpha, W(0,0) ... W(L-1,H-1), C(0,0) ... C(Q-1,H-1), offset
     # modified_variable indicates which parameters were modified in the solution. -1 if all of them were.
-    def compute_cost(candidate_solution, modified_variable):
+    def compute_static_NMSE(candidate_solution, modified_variable):
         # Get parameters from candidate solution
         alpha, W, C, offset = decode_solution(candidate_solution, L, H, Q)
         
@@ -122,18 +122,18 @@ def define_cost(L, H, Q, Fs, train_filename):
         
         return cost
         
-    return compute_cost
+    return compute_static_NMSE
 
 
 # Define dynamic cost for a given LVN structure 
-# To determine how to split the train signal in windows, a hyperparameter signal_window_proportion defines how many times the signal length is greater than the windows length
-def define_dynamic_cost(signal_window_proportion, alpha, L, H, Q, Fs, train_filename):
+# To determine how to split the train signal in windows, a hyperparameter signal_window_len_ratio defines how many times the signal length is greater than the windows length
+def define_dynamic_cost(signal_window_len_ratio, alpha, L, H, Q, Fs, train_filename):
     # IO
     train_input, train_output = data_handling.read_io(train_filename)
     # Define windows length
-    window_length = len(train_input) / signal_window_proportion
+    window_length = int(len(train_input) / signal_window_len_ratio)
     # Compute number of windows considering an overlap of 50% between successive windows
-    num_windows = 2 * (len(train_input) / window_length) + 1
+    num_windows = 2 * (len(train_input) / window_length) - 1
     
     # Propagate Laguerre filterbank
     solution_system = laguerre_volterra_network_structure.LVN()
@@ -142,7 +142,7 @@ def define_dynamic_cost(signal_window_proportion, alpha, L, H, Q, Fs, train_file
     
     # Compute dynamic cost of a candidate solution, which is encoded as a flat array: alpha, W(0,0) ... W(L-1,H-1), C(0,0) ... C(Q-1,H-1), offset
     # This cost changes the portion of train signal under optimization according to the proportion of iterations already performed by the metaheuristic
-    def compute_cost(candidate_solution, iterations_proportion, modified_variable):
+    def compute_dynamic_NMSE(candidate_solution, iterations_proportion, modified_variable):
         # Get parameters from candidate solution
         W, C, offset = decode_alphaless_solution(candidate_solution, L, H, Q)
         
@@ -153,19 +153,20 @@ def define_dynamic_cost(signal_window_proportion, alpha, L, H, Q, Fs, train_file
             weights_modified = False
         
         # Determine current window
-        current_window = math.floor( num_windows * iterations_proportion )
+        current_window = int(math.floor( num_windows * iterations_proportion ))
         # Array positions defining the window
-        win_min_pos = current_window * window_length
-        win_max_pos = (current_window + 1) * window_length
+        win_min_pos = current_window * int(window_length / 2 )
+        win_max_pos = win_min_pos + window_length
+        
         if win_max_pos > len(train_input):
             print('Error, window index is larger than signal size')
             exit(-1)
         
-        # Generate output and compute cost
+        # Generate output for the current window under optimization and compute cost
         solution_output = solution_system.polynomial_activation(train_input[win_min_pos : win_max_pos], filterbank_outputs[win_min_pos : win_max_pos], W, C, offset, weights_modified)
-        
-        cost = raw_NMSE(train_output[win_min_pos : win_max_pos], solution_output[win_min_pos : win_max_pos])
+        cost = raw_NMSE(train_output[win_min_pos : win_max_pos], solution_output)
+        print(cost)
         
         return cost
         
-    return compute_cost
+    return compute_dynamic_NMSE
