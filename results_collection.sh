@@ -7,9 +7,9 @@ nohup python3 results_collection.py finite aiwpso&
 nohup python3 results_collection.py finite acor&
 nohup python3 results_collection.py finite baacor&
 
-# nohup python3 results_collection.py infinite sa&
-# nohup python3 results_collection.py infinite acfsa&
-# nohup python3 results_collection.py infinite pso&
-# nohup python3 results_collection.py infinite aiwpso&
-# nohup python3 results_collection.py infinite acor&
-# nohup python3 results_collection.py infinite baacor&
+nohup python3 results_collection.py infinite sa&
+nohup python3 results_collection.py infinite acfsa&
+nohup python3 results_collection.py infinite pso&
+nohup python3 results_collection.py infinite aiwpso&
+nohup python3 results_collection.py infinite acor&
+nohup python3 results_collection.py infinite baacor&
