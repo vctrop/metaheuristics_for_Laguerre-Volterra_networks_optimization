@@ -28,16 +28,27 @@ import data_handling
 
 if len(sys.argv) != 2:
     print("Error, specify the LVN file to extract kernels from")
-    print("E.g. \"py volterra_kernels.py my_sys.LVN\" ")
+    print("E.g. \"py %s my_sys.LVN\" " % sys.argv[0])
     exit(-1)
 
-def laguerre_convolution_kernel(order, sample, alpha):
-    sum = 0.0
-    for k in range(order):
-        sum += ((-1) ** k) * binom(sample, k) * binom(order, k) * (alpha ** (order - k)) * ((1 - alpha) ** k)
+def laguerre_filterbank_response(order, alpha):
+    memory = laguerre_volterra_network_structure.laguerre_filter_memory(alpha)
     
-    output = (alpha ** ((sample - order)/2)) * np.sqrt(1 - alpha) * sum
-    return output
+    filterbank_impulse_responses = []
+    for j in range(order):
+        order_response = []
+        for m in range(memory):
+            sum = 0.0
+            for k in range(j):
+                sum += ((-1) ** k) * binom(m, k) * binom(j, k) * (alpha ** (j - k)) * ((1 - alpha) ** k)
+            
+            output = (alpha ** ((m - j)/2)) * np.sqrt(1 - alpha) * sum
+            order_response.append(output)
+        
+        filterbank_impulse_responses.append(order_response)
+        
+    return np.array(filterbank_impulse_responses)
+    
     
 #LVN_parameters = data_handling.read_LVN_file("finite_ord_train_system.LVN")
 LVN_parameters = data_handling.read_LVN_file(sys.argv[1])
@@ -53,6 +64,8 @@ H = len(C)
 
 memory = laguerre_volterra_network_structure.laguerre_filter_memory(alpha)
 
+laguerre_bank = laguerre_filterbank_response(L, alpha)
+
 # Compute 1st order kernel
 kernel_1 = np.array([0.0]*memory)
 # At each kenel point
@@ -63,7 +76,7 @@ for m in range(memory):
         sum_filters = 0.0
         # For each laguerre filter
         for j in range(L):
-            sum_filters += W[h][j] * laguerre_convolution_kernel(j, m, alpha)
+            sum_filters += W[h][j] * laguerre_bank[j, m]
             
         sum_units += C[h, 0] * sum_filters
     kernel_1[m] = np.float(sum_units)
@@ -85,7 +98,7 @@ for m1 in range(memory):
             # For each laguerre filter
             for j1 in range(L):
                 for j2 in range(L):
-                    sum_filters += W[h][j1] * W[h][j2] * laguerre_convolution_kernel(j1, m1, alpha) * laguerre_convolution_kernel(j2, m2, alpha)
+                    sum_filters += W[h][j1] * W[h][j2] * laguerre_bank[j1, m1] * laguerre_bank[j2, m2]
             
             sum_units += C[h, 1] * sum_filters
         
