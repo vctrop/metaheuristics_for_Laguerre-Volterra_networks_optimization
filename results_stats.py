@@ -17,18 +17,17 @@
 
 import numpy as np
 
-# acor_finite_times.npy
-# acor_finite_train_costs.npy
-# acor_finite_train_costs.npy
-
-function_evals = [i * 100 for i in range(101)] + [11000 + i * 1000 for i in range(90)]
+function_evals = [i * 100 for i in range(1,101)] + [11000 + i * 1000 for i in range(90)]
 function_evals_str = [str(i) for i in function_evals]
-function_evals_of_interest = [1e3, 5e3,10e3,15e3,20e3,25e3]
+function_evals_of_interest = [1e3, 5e3,1e4,5e4,1e5]
 evals_mask = [eval in function_evals_of_interest for eval in function_evals]
+
+print('Function evaluations of interest:\n' + str(function_evals_of_interest))
 
 for system_order in ['finite', 'infinite']:
     print(system_order)
     for algorithm in ['sa', 'acfsa', 'pso', 'aiwpso', 'acor', 'baacor']:
+    #for algorithm in ['sa', 'pso', 'acor']:
         print(algorithm)
         base_filename = './results/' + algorithm + '_' + system_order
         
@@ -39,6 +38,7 @@ for system_order in ['finite', 'infinite']:
         
         train_times_avg = np.mean(train_times)
         train_times_std = np.std(train_times, ddof=1)
+        print('Train time: %.3f (%.3f)' % (train_times_avg, train_times_std))
         
         train_costs_at_fes = train_costs_mat[:, evals_mask]
         # print(np.shape(train_costs_at_fes))
@@ -49,9 +49,10 @@ for system_order in ['finite', 'infinite']:
             print('Error, train and test costs have different shapes')
             exit(-1)
         
+        
         # Compute avgs and sample stds for each function evaluation of interest (i.e. each column of the matrices)
         for c in range(np.shape(train_costs_at_fes)[1]):
-            print(function_evals_str[c])
+            #print(function_evals_str[c])
             train_costs = train_costs_at_fes[:, c]
             # print(np.shape(train_costs))
             test_costs = test_costs_at_fes[:, c]
@@ -61,8 +62,10 @@ for system_order in ['finite', 'infinite']:
             test_costs_avg  = np.mean(test_costs)
             train_costs_std = np.std(train_costs, ddof=1)
             test_costs_std  = np.std(test_costs , ddof=1)
-            print('Train time: %.3f (%.3f)' % (train_times_avg, train_times_std))
-            print('Train cost: %.3f (%.3f)' % (train_costs_avg, train_costs_std))
+            
+            print('Train cost: %.3f' % (train_costs_avg))
             print('Test cost : %.3f (%.3f)' % (test_costs_avg , test_costs_std))
             print('\n')
         print('\n')
+        
+        
