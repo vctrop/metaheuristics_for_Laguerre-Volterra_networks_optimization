@@ -63,7 +63,7 @@ test_filename  = './signals_and_systems/' + order_str + '_order_test.csv'
 if order_str == 'finite':
     L = 5;  H = 3;  Q = 4
 else:
-    L = 2;  H = 4;  Q = 5
+    L = 2;  H = 3;  Q = 5
 
 # Number of objective function evaluations of interest
 function_evals = [i * 100 for i in range(101)] + [11000 + i * 1000 for i in range(90)]
