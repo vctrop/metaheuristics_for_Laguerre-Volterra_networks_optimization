@@ -167,34 +167,3 @@ class PSO(Base):
             
         return np.array(recorded_solutions)
         
-        
-class AIWPSO(PSO):
-    """ Class for the Adaptative Inertia Weight Particle Swarm Optimization (AIWPSO), following (Nickabadi et al., 2011).
-        Only the adaptive mechanism of AIWPSO is implemented here.
-        The paper also uses a mutation mechanism for the worst particle at each iteration, which is left unimplemented. """
-        
-    def __init__(self):
-        """ Constructor """
-        super().__init__()
-        
-        self.adaptive_inertia = True
-        self.max_inertia = None
-        self.min_inertia = None
-    
-    def set_parameters(self, population_size, personal_acceleration, global_acceleration, min_inertia, max_inertia, function_evaluations_array):
-        if min_inertia > max_inertia:
-            print("Max intertia mut be greater than min inertia")
-            exit(-1)
-            
-        super().set_parameters(population_size, personal_acceleration, global_acceleration, function_evaluations_array)
-        self.min_inertia = min_inertia
-        self.max_inertia = max_inertia
-        
-    def update_inertia_weight(self, acceptance_count):
-        """ Use swarm success rate to update the inertia weight """
-        success_percentage = acceptance_count / self.population_size
-        self.inertia_weight = (self.max_inertia - self.min_inertia) * success_percentage + self.min_inertia
-        
-        
-        
-        

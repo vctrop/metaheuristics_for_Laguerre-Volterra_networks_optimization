@@ -34,7 +34,7 @@ import particle_swarm_optimization
 # Argument number checking
 if len(sys.argv) != 3:
     print('Error, wrong number of arguments. Execute this script as follows:\npython3 %s {simulated system order} {metaheuristic}' % sys.argv[0])
-    print('The allowed values are: order = {\'finite\', \'infinite\'},  metaheuristic = {\'ACOr\', \'BAACOr\', \'SA\', \'ACFSA\', \'PSO\',  \'AIWPSO\'}')
+    print('The allowed values are: order = {\'finite\', \'infinite\'},  metaheuristic = {\'ACOr\', \'SA\', \'PSO\'')
     exit(-1)
     
 # Argument coherence checking
@@ -45,7 +45,7 @@ if order_str != 'finite' and order_str != 'infinite':
     
 metaheuristic_name = (sys.argv[2]).lower()
 
-if metaheuristic_name != 'acor' and metaheuristic_name != 'baacor'  and metaheuristic_name != 'sa' and metaheuristic_name != 'acfsa' and metaheuristic_name != 'pso' and metaheuristic_name != 'aiwpso':
+if metaheuristic_name != 'acor' and metaheuristic_name != 'sa' and metaheuristic_name != 'pso':
     print('Error, choose an available metaheuristic')
     exit(-1)
 
@@ -77,18 +77,6 @@ if metaheuristic_name == 'acor':
     metaheuristic = ant_colony_for_continuous_domains.ACOr()
     metaheuristic.set_parameters(pop_size, k, q, xi, function_evals)
     
-elif metaheuristic_name == 'baacor':
-    print('BAACOr')
-    # Parameters used for BAACOr
-    k = 50
-    m = 10
-    q_min = 1e-2;    q_max = 1.0
-    xi_min = 0.1;    xi_max = 0.93
-    # Configure
-    metaheuristic = ant_colony_for_continuous_domains.BAACOr()
-    metaheuristic.set_verbosity(False)
-    metaheuristic.set_parameters(m, k, q_min, q_max, xi_min, xi_max, 'exp', 'sig', function_evals)
-
 elif metaheuristic_name == 'sa':
     print('SA')
     # Parameters to be used for SA
@@ -97,33 +85,14 @@ elif metaheuristic_name == 'sa':
     metaheuristic = simulated_annealing.SA()
     metaheuristic.set_parameters(initial_temperature, cooling_constant, step_size, local_iterations, function_evals)
     
-elif metaheuristic_name == 'acfsa':
-    print('ACFSA')
-    # Parameters to be used for ACFSA
-    local_iterations = 100
-    initial_temperature = 50
-    cooling_constant = 0.99 
-    # Configure
-    metaheuristic = simulated_annealing.ACFSA()
-    metaheuristic.set_verbosity(False)
-    metaheuristic.set_parameters(initial_temperature, cooling_constant, local_iterations, function_evals)
-
-
-elif metaheuristic_name == 'pso':
+else: # metaheuristic_name == "pso":
     print('PSO')
     # Parameters to be used for PSO
     swarm_size = 20;  personal_acceleration = 2;  global_acceleration = 2
     metaheuristic = particle_swarm_optimization.PSO()
     metaheuristic.set_parameters(swarm_size, personal_acceleration, global_acceleration, function_evals)
     
-else: # metaheuristic_name == "aiwpso":
-    print("AIWPSO")
-    # Parameters to be used for AIWPSO
-    swarm_size = 20;  personal_acceleration = 2;  global_acceleration = 2
-    min_inertia = 0.3; max_inertia = 0.99
-    metaheuristic = particle_swarm_optimization.AIWPSO()
-    metaheuristic.set_parameters(swarm_size, personal_acceleration, global_acceleration, min_inertia, max_inertia, function_evals)
-
+    
 # Cost function definition based on structural parameters and ground truth
 metaheuristic.set_cost(optimization_utilities.define_cost(L, H, Q, Fs, train_filename))
 
@@ -190,7 +159,7 @@ for i in range(30):
     test_costs.append(run_test_NMSEs)
 
 output_base_filename = metaheuristic_name + '_' + order_str
-np.save('./results/' + output_base_filename + '_times.npy'          , optimization_times)   
-np.save('./results/' + output_base_filename + '_train_solutions.npy', train_solutions)
-np.save('./results/' + output_base_filename + '_train_costs.npy', train_costs)
-np.save('./results/' + output_base_filename + '_test_costs.npy' , test_costs)
+np.save('./results_a/' + output_base_filename + '_times.npy'          , optimization_times)   
+np.save('./results_a/' + output_base_filename + '_train_solutions.npy', train_solutions)
+np.save('./results_a/' + output_base_filename + '_train_costs.npy', train_costs)
+np.save('./results_a/' + output_base_filename + '_test_costs.npy' , test_costs)

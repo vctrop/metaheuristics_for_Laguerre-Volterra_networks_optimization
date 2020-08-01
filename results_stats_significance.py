@@ -41,7 +41,6 @@ function_evals = [i * 100 for i in range(1,101)] + [11000 + i * 1000 for i in ra
 function_evals_of_interest = [1e3, 1e4, 1e5]
 evals_mask = [eval in function_evals_of_interest for eval in function_evals]
 
-#for algorithm in ['sa', 'acfsa', 'pso', 'aiwpso', 'acor', 'baacor']:
 for system_order in ['finite', 'infinite']:
     print(system_order.upper())
 
