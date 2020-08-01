@@ -159,7 +159,7 @@ for i in range(30):
     test_costs.append(run_test_NMSEs)
 
 output_base_filename = metaheuristic_name + '_' + order_str
-np.save('./results_a/' + output_base_filename + '_times.npy'          , optimization_times)   
-np.save('./results_a/' + output_base_filename + '_train_solutions.npy', train_solutions)
-np.save('./results_a/' + output_base_filename + '_train_costs.npy', train_costs)
-np.save('./results_a/' + output_base_filename + '_test_costs.npy' , test_costs)
+np.save('./results/' + output_base_filename + '_times.npy'          , optimization_times)   
+np.save('./results/' + output_base_filename + '_train_solutions.npy', train_solutions)
+np.save('./results/' + output_base_filename + '_train_costs.npy', train_costs)
+np.save('./results/' + output_base_filename + '_test_costs.npy' , test_costs)
