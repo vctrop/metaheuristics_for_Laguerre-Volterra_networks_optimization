@@ -1,6 +1,6 @@
 #!python3
 
-# Copyright (C) 2020  Victor O. Costa
+# Copyright (C) 2020 Victor O. Costa
 
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -28,7 +28,7 @@ def write_LVN_file(file_name, system_parameters):
     L = len(system_parameters[1][0])
     H = len(system_parameters[1])
     Q = len(system_parameters[2][0])
-    system_file_name = 'signals_and_systems/' + file_name + "_system.LVN"
+    system_file_name = file_name + "_system.LVN"
     with open(system_file_name, mode = 'w', newline='') as file:
         writer = csv.writer(file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
         writer.writerow([L, H, Q])
@@ -66,17 +66,23 @@ def generate_io(system_type, num_samples, file_name, deterministic_parameters):
     
     # Unit is a zero mean and unit variance Gaussian white noise (GWN) signal
     input = np.random.normal(0.0, 1.0, num_samples)
+    # Finite order
     if system_type == "lvn":
         L = 5; H = 3; Q = 4
+        # Train
         if deterministic_parameters == None:
             noiseless_output, deterministic_parameters = simulated_systems.simulate_LVN_random(input, L, H, Q)
+        # Test
         else:
             noiseless_output = simulated_systems.simulate_LVN_deterministic(input, L, H, Q, deterministic_parameters)
             
         write_LVN_file(file_name, deterministic_parameters)
+    # Infinite order
     else:
+        # Train
         if deterministic_parameters == None:
             noiseless_output, alphas = simulated_systems.simulate_cascaded_random(input, 3)
+        # Test
         else:
             noiseless_output = simulated_systems.simulate_cascaded_deterministic(input, alphas)
         
@@ -101,6 +107,7 @@ def generate_io(system_type, num_samples, file_name, deterministic_parameters):
         csv_writer.writerow(output)
     
     return deterministic_parameters
+
 
 # Read IO data from CSVs
 def read_io(file_name):

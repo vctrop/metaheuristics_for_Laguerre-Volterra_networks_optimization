@@ -34,7 +34,7 @@ import particle_swarm_optimization
 # Argument number checking
 if len(sys.argv) != 3:
     print('Error, wrong number of arguments. Execute this script as follows:\npython3 %s {simulated system order} {metaheuristic}' % sys.argv[0])
-    print('The allowed values are: order = {\'finite\', \'infinite\'},  metaheuristic = {\'ACOr\', \'SA\', \'PSO\'}')
+    print('The allowed values are: order = {\'finite\', \'infinite\'},  metaheuristic = {\'ACOr\', \'BAACOr\', \'SA\', \'ACFSA\', \'PSO\',  \'AIWPSO\'}')
     exit(-1)
     
 # Argument coherence checking

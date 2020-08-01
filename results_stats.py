@@ -19,15 +19,15 @@ import numpy as np
 
 function_evals = [i * 100 for i in range(1,101)] + [11000 + i * 1000 for i in range(90)]
 function_evals_str = [str(i) for i in function_evals]
-function_evals_of_interest = [1e3, 5e3,1e4,5e4,1e5]
+function_evals_of_interest = [1e2, 1e3, 5e3,1e4,1e5]
 evals_mask = [eval in function_evals_of_interest for eval in function_evals]
 
 print('Function evaluations of interest:\n' + str(function_evals_of_interest))
 
 for system_order in ['finite', 'infinite']:
     print(system_order)
-    for algorithm in ['sa', 'acfsa', 'pso', 'aiwpso', 'acor', 'baacor']:
-    #for algorithm in ['sa', 'pso', 'acor']:
+    #for algorithm in ['sa', 'acfsa', 'pso', 'aiwpso', 'acor', 'baacor']:
+    for algorithm in ['sa', 'pso', 'acor']:
         print(algorithm)
         base_filename = './results/' + algorithm + '_' + system_order
         

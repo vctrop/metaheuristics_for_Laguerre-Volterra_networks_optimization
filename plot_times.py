@@ -50,6 +50,7 @@ from matplotlib.ticker import FuncFormatter
 
 # plt.show()
 
+# THIS IS IMPLEMENTATION-DEPENDENT, DO NOT DISPLAY IN THE PAPER!
 
 def hours(x, pos):
     'The two args are the value and tick position'
@@ -62,15 +63,16 @@ formatter = FuncFormatter(hours)
 x = np.arange(3) + 1
 x_ticks = ("SA", "PSO", "ACO" + r"$_\mathbb{R}$")
 
+
 for system_order in ["finite", "infinite"]:
     fig, ax = plt.subplots()
+      
     ax.yaxis.set_major_formatter(formatter)
     box_data = []
     for algorithm in ["sa", "pso", "acor"]:
-        base_filename = "./results/" + system_order + "_" + algorithm
-        
         # Load data
-        train_times     = np.load(base_filename + "_100k_times.npy")
+        filename = "./results/" + algorithm + "_" + system_order + "_times.npy"
+        train_times     = np.load(filename)
         box_data.append(train_times)
     plt.boxplot(box_data, showfliers=False)
     plt.xticks(x, x_ticks)
