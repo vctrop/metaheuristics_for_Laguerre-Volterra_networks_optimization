@@ -33,4 +33,4 @@ Here we optimize the continuous parameters of the LVN to model synthetic systems
 * plotting scripts
 
 ### If this repository is valuable to you, consider citing:
-Costa, V. and Müller, M. F. (2020). "Evaluation of Metaheuristics in the Optimization of Laguerre-Volterra Networks for Nonlinear Dynamic System Identification". <i>  9th Brazilian Conference on Intelligent Systems, BRACIS </i> (2020).
+Costa, V. O. and Müller, M. F. (2020). "Evaluation of Metaheuristics in the Optimization of Laguerre-Volterra Networks for Nonlinear Dynamic System Identification". <i>  9th Brazilian Conference on Intelligent Systems, BRACIS </i> (2020).
