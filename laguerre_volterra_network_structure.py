@@ -111,7 +111,6 @@ class LVN:
                 weighted_inputs = sum([w * v for w, v in zip(list( np.array(hidden_units_weights)[h, :] ), filter_bank_outputs)])
                 
                 # compute hidden unit output from polynomial coefficients
-                # future: Horner's algorithm without constant constant term
                 unit_output = 0.0
                 for q in range(1, self.Q):
                     unit_output += np.array(polynomial_coefficients)[h, q - 1] * (weighted_inputs ** q)
