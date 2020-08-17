@@ -101,8 +101,8 @@ elif metaheuristic_name == 'acfsa':
     print('ACFSA')
     # Parameters to be used for ACFSA
     local_iterations = 100
-    initial_temperature = 50
-    cooling_constant = 0.99 
+    initial_temperature = 10
+    cooling_constant = 0.99
     # Configure
     metaheuristic = simulated_annealing.ACFSA()
     metaheuristic.set_verbosity(False)

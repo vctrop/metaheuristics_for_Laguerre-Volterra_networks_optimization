@@ -41,14 +41,14 @@ function_evals = [i * 100 for i in range(1,101)] + [11000 + i * 1000 for i in ra
 function_evals_of_interest = [1e3, 1e4, 1e5]
 evals_mask = [eval in function_evals_of_interest for eval in function_evals]
 
-#for algorithm in ['sa', 'acfsa', 'pso', 'aiwpso', 'acor', 'baacor']:
 for system_order in ['finite', 'infinite']:
     print(system_order.upper())
 
     for eval in range(len(function_evals_of_interest)):
         algorithms_at_fes = []      
-        for algorithm in ['sa', 'pso', 'acor']:
+        for algorithm in ['sa', 'acfsa', 'pso', 'aiwpso', 'acor', 'baacor']:
             print(algorithm)
+            # Load test costs of a given metaheuristic for a given system, considering some number of objective function evaluations
             base_filename   = './results/' + algorithm + '_' + system_order
             test_costs_mat  = np.load(base_filename + '_test_costs.npy')
             test_costs_of_interest = test_costs_mat[:, evals_mask]
@@ -58,9 +58,9 @@ for system_order in ['finite', 'infinite']:
             print(str(function_evals_of_interest[eval]) + ':  \t' + str(np.mean(costs_fe)))
         
         algorithms_at_fes = np.array(algorithms_at_fes)
-        print('\n\n Statistical significance')
+        print('\n Statistical significance')
         print(np.shape(algorithms_at_fes))    
-        print('Friedman p-val = ' + str(scipy.stats.friedmanchisquare(*algorithms_at_fes)[1]))
+        print('Friedman p-val = ' + str(scipy.stats.friedmanchisquare(*algorithms_at_fes)[1]) + '\n\n')
         nm_posthoc = sp.posthoc_nemenyi_friedman(algorithms_at_fes.T)
         plt.figure()
         sp.sign_plot(nm_posthoc, **heatmap_args)

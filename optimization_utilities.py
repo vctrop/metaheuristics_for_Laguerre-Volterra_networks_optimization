@@ -29,7 +29,25 @@ def NMSE(y, y_pred, alpha):
     M = laguerre_volterra_network_structure.laguerre_filter_memory(alpha)
     
     if len(y) <= M:
-        print("Data length is less than required by alpha parameter")
+        print("Data length is less than required by the alpha parameter")
+        exit(-1)
+    
+    y = np.array(y)
+    y_pred = np.array(y_pred)
+    error = y[M:] - y_pred[M:]
+    
+    NMSE = sum( error**2 ) / sum( y[M:]**2 )
+    
+    return NMSE
+    
+# Normalized mean squared error
+def NMSE_explicit_memory(y, y_pred, M):
+    if len(y) != len(y_pred):
+        print("Actual and predicted y have different lengths")
+        exit(-1)
+ 
+    if len(y) <= M:
+        print("Data length is less than required by the memory parameter")
         exit(-1)
     
     y = np.array(y)
@@ -40,7 +58,6 @@ def NMSE(y, y_pred, alpha):
     
     return NMSE
 
-    
 # Break flat list-like solution into [alpha, W, C, offset] for a given LVN structure
 def decode_solution(candidate_solution, L, H, Q):
     # Identify solution members
@@ -49,7 +66,7 @@ def decode_solution(candidate_solution, L, H, Q):
     flat_C = candidate_solution[(H * L + 1) : (H * L + 1) + H * Q]
     offset = candidate_solution[(H * L + 1) + H * Q]
     
-    # de-flat W and C
+    # unflatten W and C
     W = []
     C = []
     for hidden_unit in range(H):
