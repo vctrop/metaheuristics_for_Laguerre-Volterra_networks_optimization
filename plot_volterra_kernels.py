@@ -16,15 +16,27 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 # Given a Laguerre-Volterra Network, plot corresponding low-order Volterra kernels
+
+# Python std library
 import sys
+import math
+# Own
+import laguerre_volterra_network_structure
+import data_handling
+# Third party
 import numpy as np
 import matplotlib.pyplot as plt
-from scipy.special import binom
+from matplotlib.colors import TwoSlopeNorm 
+#from scipy.special import binom
 from mpl_toolkits.mplot3d import Axes3D
 from matplotlib import cm
 from matplotlib.ticker import LinearLocator, FormatStrFormatter
-import laguerre_volterra_network_structure
-import data_handling
+
+def binom(n, k):
+    if n < k:
+        return 0
+    
+    return math.factorial(n) / ( math.factorial(k) * math.factorial(n - k))
 
 if len(sys.argv) != 2:
     print("Error, specify the LVN file to extract kernels from")
@@ -84,7 +96,8 @@ for m in range(memory):
 print("[1st order Volterra kernel]")    
 print(kernel_1)
 plt.figure(figsize=(10,10))
-plt.plot(kernel_1)
+plt.xticks(np.arange(0,memory,1))
+plt.plot(kernel_1, color='k')
 
 # Compute 2nd order kernel
 kernel_2 = np.array([[0.0] * memory for _ in range(memory)])
@@ -108,14 +121,21 @@ print("[2nd order Volterra kernel]")
 print(kernel_2)
 
 fig = plt.figure(figsize=(10,10))
-ax = fig.gca(projection='3d')
-x = y = np.arange(0, memory, 1)
-X, Y = np.meshgrid(x, y)
-ax.plot_surface(X, Y, kernel_2, cmap='inferno', antialiased=False, alpha=0.27)
 
-# Customize the z axis.
-ax.set_zlim(-1.01, 1.01)
-ax.zaxis.set_major_locator(LinearLocator(10))
-ax.zaxis.set_major_formatter(FormatStrFormatter('%.02f'))
+# 3D plot
+# ax = fig.gca(projection='3d')
+# x = y = np.arange(0, memory, 1)
+# X, Y = np.meshgrid(x, y)
+# ax.plot_surface(X, Y, kernel_2, cmap='inferno', antialiased=False, alpha=0.27)
+# # Customize the z axis.
+# ax.set_zlim(-1.01, 1.01)
+# ax.zaxis.set_major_locator(LinearLocator(10))
+# ax.zaxis.set_major_formatter(FormatStrFormatter('%.02f'))
 
+# Heatmap plot
+norm = TwoSlopeNorm(vmin=kernel_2.min(), vmax = kernel_2.max(), vcenter=0)
+plt.imshow(kernel_2, cmap='RdBu', interpolation='nearest', norm=norm)
+plt.xticks(np.arange(0, memory, 1))
+plt.yticks(np.arange(0, memory, 1))
+plt.colorbar()
 plt.show()
