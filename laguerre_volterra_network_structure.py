@@ -15,12 +15,18 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import numpy as np
+# Python std lib
 import math
+from collections.abc import Iterable
+# Third party
+import numpy as np
 
-# Class defining structure of the Laguerre-Volterra network (LVN) for a generic set of parameters
+
+
 class LVN:
+    ''' Class defining structure of the Laguerre-Volterra network (LVN) for a generic set of parameters. '''
     def __init__(self):
+        ''' Constructor. '''
         # Structural parameters
         self.L = None           # laguerre_order
         self.H = None           # num_hidden_units
@@ -28,16 +34,16 @@ class LVN:
         self.T = None           # sampling_interval
 
         
-    # Define order of laguerre filter-bank, number of hidden layer units and polynomial activation order
     def define_structure(self, laguerre_order, num_hidden_units, polynomial_order, sampling_interval):
+        ''' Define order of laguerre filter-bank, number of hidden layer units and polynomial activation order. '''
         self.L = laguerre_order
         self.H = num_hidden_units
         self.Q = polynomial_order
         self.T = sampling_interval
         
-        
-    # Normalize hidden unit input weights to unit norm and scale polynomial coefficients according to the hidden unit it belongs and the polynomial order
+      
     def normalize_scale_parameters(self, hidden_units_weights, polynomial_coefficients):
+        ''' Normalize hidden unit input weights to unit norm and scale polynomial coefficients according to the hidden unit it belongs and the polynomial order. '''
         # Shape of the dependent parameters are defined by structural parameters 
         if np.shape(hidden_units_weights) != (self.H, self.L):
             print("Error, wrong shape of hidden unit weights")
@@ -61,10 +67,39 @@ class LVN:
             scaled_coefficients[:, poly_order - 1] *= (units_absolute_values ** poly_order)
             
         return list(normalized_weights), list(scaled_coefficients)
-    
         
-    # Compute output from imput time-series for a given set of dependent continuous parameters (smoothing constant, filterbank-nonlinearities weights, polynomial coefficients and output offset)
+        
+    def propagate_laguerre_filterbank(self, signal, alpha):
+        ''' Propagate input signal through the Laguerre filter bank.
+            The output is an (L,N) matrix. '''
+        
+        # Sanity check
+        if not isinstance(signal, Iterable):
+            print('Error, input signal must be an iterable object')
+            exit(-1)
+        if alpha <= 0:
+            print('Error, alpha must be positive')
+            exit(-1)
+        
+        alpha_sqrt = math.sqrt(alpha)
+        bank_outputs = np.zeros((self.L, 1 + len(signal)))      # The bank_outputs matrix initially has one extra column to represent zero values at n = -1
+        
+        # Propagate V_{j} with j = 0
+        for n, sample in enumerate(signal):
+            bank_outputs[0, n + 1] = alpha_sqrt * bank_outputs[0, n - 1 + 1] +  self.T * np.sqrt(1 - alpha) * sample
+        
+        # Propagate V_{j} with j = 1, .., L-1
+        for j in range(1, self.L):
+            for n in range(len(signal)):
+                bank_outputs[j, n + 1] = alpha_sqrt * (bank_outputs[j, n - 1 + 1] + bank_outputs[j - 1, n + 1]) - bank_outputs[j - 1, n - 1  + 1]
+        
+        bank_outputs = bank_outputs[:,1:]
+        
+        return bank_outputs
+        
+        
     def compute_output(self, x, laguerre_alpha, hidden_units_weights, polynomial_coefficients, output_offset, weights_modified):
+        ''' Compute output from input time-series for a given set of dependent continuous parameters (smoothing constant, filterbank-nonlinearities weights, polynomial coefficients and output offset). '''
         ## Error checking
         # Network structure must be specified before dependent parameters
         if self.L == None or self.H == None or self.Q == None:
@@ -85,44 +120,42 @@ class LVN:
         if weights_modified:
             hidden_units_weights, polynomial_coefficients = self.normalize_scale_parameters(hidden_units_weights, polynomial_coefficients)
         
-        # Pre-compute alpha square root to avoid repeated computation
+        # Precompute alpha square root to avoid repeated computation
         alpha_sqrt = np.sqrt(laguerre_alpha)
+        hidden_units_weights = np.array(hidden_units_weights)
+        polynomial_coefficients = np.array(polynomial_coefficients)
         
-        # Initiate Laguerre filter bank
-        filter_bank_outputs = [0] * self.L
-        delayed_filter_bank_outputs = list(filter_bank_outputs)                              # look for a way to eliminate the delayed filter bank outputs (it is only really needed in the last term of filter bank outputs computation)
+        # Propagate the input signal through the filter bank
+        # Filter bank outputs mat is (L, N)
+        N = len(x)
+        laguerre_outputs = self.propagate_laguerre_filterbank(x, laguerre_alpha)
         
-        # Input x into the system and get its output y
-        y = [output_offset] * len(x)
-        for i, sample in enumerate(x):    
-            ## update all L laguerre filters outputs
-            # update v_0
-            delayed_filter_bank_outputs[0] = filter_bank_outputs[0]
-            filter_bank_outputs[0] = alpha_sqrt * delayed_filter_bank_outputs[0] +  self.T * np.sqrt(1 - laguerre_alpha) * sample
-            # update v_1 .. v_{L-1
-            for j in range(1, self.L):
-                delayed_filter_bank_outputs[j] = filter_bank_outputs[j]
-                filter_bank_outputs[j] = alpha_sqrt * delayed_filter_bank_outputs[j] + alpha_sqrt * filter_bank_outputs[j - 1] - delayed_filter_bank_outputs[j - 1]
-            #print(np.array(filter_bank_outputs))
-            
-            # Compute and accumulate hidden units outputs
-            for h in range(self.H):
-                # compute hidden unit input via inner product between filter-bank outputs and weights[:, h]
-                weighted_inputs = sum([w * v for w, v in zip(list( np.array(hidden_units_weights)[h, :] ), filter_bank_outputs)])
-                
-                # compute hidden unit output from polynomial coefficients
-                # future: Horner's algorithm without constant constant term
-                unit_output = 0.0
-                for q in range(1, self.Q):
-                    unit_output += np.array(polynomial_coefficients)[h, q - 1] * (weighted_inputs ** q)
-                
-                y[i] += unit_output
+        # Define the input of each hidden node as the dot product between the Laguerre filterbank outputs and the weight vectors
+        # Hidden nodes inputs mat is (N,H)
+        hidden_nodes_inputs = np.matmul(laguerre_outputs.T, hidden_units_weights.T)
+        
+        # The outputs of hidden layer mat is (N, HQ+1).
+        # Each node has one projection as input and Q values as outputs (Q-1 of them are nonlinear)
+        # All positions of the first column are ones to account for the output offset
+        hidden_layer_out = np.ones((N, self.H * self.Q + 1))
+        for q in range(1, self.Q + 1):
+            hidden_layer_out[:, 1  + (q - 1) * self.H : 1 + q * self.H] = np.power(hidden_nodes_inputs, q)
+        
+        # Flatten polynomial coefficients to compute the final output from hidden layer outputs using matrix-vector multiplication
+        flattened_coefficients = (polynomial_coefficients.T).flatten()
+        # print(flattened_coefficients)
+        # print(output_offset)
+        # The output offset in the first position is always multiplied by 1
+        linear_params = np.concatenate(([output_offset], flattened_coefficients))
+        
+        
+        y = hidden_layer_out @ linear_params
         
         return y
         
         
-#
 def laguerre_filter_memory(alpha):
+    ''' Rough estimate of the extent of significative values in the Laguerre bank's impulse responses. '''
     M = (-30 - math.log(1 - alpha)) / math.log(alpha)
     M = math.ceil(M)
     

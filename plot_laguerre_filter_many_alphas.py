@@ -21,7 +21,7 @@ import math
 # 3rd party
 import numpy as np
 import matplotlib.pyplot as plt
-from scipy.special import binom
+# from scipy.special import binom
 # Own
 import laguerre_volterra_network_structure
 
