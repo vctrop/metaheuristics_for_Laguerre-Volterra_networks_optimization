@@ -5,6 +5,7 @@ This architecture is designed to model nonlinear dynamic systems from input-outp
 
 Here we optimize the continuous parameters of the LVN to model synthetic systems using different metaheuristics, with the purpose of performance evaluation.
 
+To use a faster implementation with more metaheuristics, switch to the 'master' branch.
 
 ## Third party software versions
 * Python 3.6.9
