@@ -26,8 +26,7 @@ print('Function evaluations of interest:\n' + str(function_evals_of_interest))
 
 for system_order in ['finite', 'infinite']:
     print(system_order)
-    #for algorithm in ['sa', 'acfsa', 'pso', 'aiwpso', 'acor', 'baacor']:
-    for algorithm in ['sa', 'pso', 'acor']:
+    for algorithm in ['sa', 'acfsa', 'pso', 'aiwpso', 'acor', 'baacor']:
         print(algorithm)
         base_filename = './results/' + algorithm + '_' + system_order
         
